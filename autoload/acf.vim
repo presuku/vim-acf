@@ -249,9 +249,7 @@ endfunction
 function! acf#stop_timer() abort
   call s:DebugMsg(0, "stop timer")
   let info = timer_info(s:ctx.timer_id)
-  if info == []
-    return
-  else
+  if info != []
     call timer_stop(s:ctx.timer_id)
   endif
   let s:ctx = s:init_ctx()
