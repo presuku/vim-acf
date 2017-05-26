@@ -13,13 +13,13 @@ Plug 'presuku/vim-acf.vim'
 ## Feature
 
 * Timer(`+timers`)-based callback.
-  vim-acf callback a function every `g:acf_update_time`.
+ * vim-acf callback a function every `g:acf_update_time`.
 
 * Rule-based fallback search.
-  Searching matched rule by `at` in order of `priority` in same `filetype`.
+ * Searching matched rule by `at` in order of `priority` in same `filetype`.
 
 * Filetype-based fallback search.
-  No found matched rule in current filetype, to next search in "" (blank) filetype.
+ * No found matched rule in current filetype, to next search in "" (blank) filetype.
 
 ## Usage
 
