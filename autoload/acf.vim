@@ -26,6 +26,10 @@ if !exists('g:acf_update_time')
   let g:acf_update_time = 250
 endif
 
+if !exists('g:acf_disable_auto_complete')
+  let g:acf_disable_auto_complete = 0
+endif
+
 if !exists('g:acf_use_default_mapping')
   let g:acf_use_default_mapping = 0
 endif
@@ -37,9 +41,10 @@ endif
 " ==============================================================================
 if exists('g:acf_use_default_mapping')
       \ && g:acf_use_default_mapping
-  inoremap <expr> <buffer> <CR> pumvisible() ? "\<C-y><CR>" : "<CR>"
-  inoremap <expr> <buffer> <TAB> pumvisible() ? "\<DOWN>" : "<TAB>"
-  inoremap <expr> <buffer> <S-TAB> pumvisible() ? "\<UP>" : "<S-TAB>"
+  inoremap <expr><silent><buffer> <CR> pumvisible() ? "\<C-y><CR>" : "<CR>"
+  inoremap <expr><silent><buffer> <TAB> pumvisible() ? "\<DOWN>" : "<TAB>"
+  inoremap <expr><silent><buffer> <S-TAB> pumvisible() ? "\<UP>" : "<S-TAB>"
+  imap <expr><silent><buffer> <C-n> pumvisible() ? "\<C-n>" : \<Plug>(acf-manual-complete)"
 endif
 
 " ==============================================================================
@@ -48,7 +53,6 @@ function! s:init_ctx()
       \ 'pos'        : [],
       \ 'timer_id'   : -1,
       \ 'has_item'   : -1,
-      \ 'force_stop' : 0,
       \ 'startcol'   : 0,
       \ 'base'       : "",
       \ 'do_feedkeys': {},
@@ -247,12 +251,13 @@ function! s:get_saved_cursor_pos() abort
 endfunction
 
 function! acf#stop_timer() abort
-  call s:DebugMsg(0, "stop timer")
-  let info = timer_info(s:ctx.timer_id)
-  if info != []
-    call timer_stop(s:ctx.timer_id)
+  if !g:acf_disable_auto_complete
+    call s:DebugMsg(0, "stop timer")
+    let info = timer_info(s:ctx.timer_id)
+    if info != []
+      call timer_stop(s:ctx.timer_id)
+    endif
   endif
-  let s:ctx = s:init_ctx()
 endfunction
 
 function! s:cb_get_completion(timer_id) abort
@@ -328,11 +333,12 @@ function! s:cb_get_completion(timer_id) abort
 endfunction
 
 function! acf#set_timer() abort
-  call s:DebugMsg(0, "set timer::")
-  call acf#stop_timer()
+  if !g:acf_disable_auto_complete
+    let s:ctx = s:init_ctx()
+    call s:DebugMsg(0, "set timer::")
+    call acf#stop_timer()
 
-  if !s:ctx.force_stop
-    call acf#get_completion()
+    call acf#get_completion(0)
     let s:ctx.timer_id =
           \ timer_start(g:acf_update_time,
           \             function('s:cb_get_completion'),
@@ -342,13 +348,12 @@ function! acf#set_timer() abort
 endfunction
 
 function! acf#enable_timer() abort
-  call acf#stop_timer()
-  let s:ctx.force_stop = 0
+  let g:acf_disable_auto_complete = 0
 endfunction
 
 function! acf#disable_timer() abort
   call acf#stop_timer()
-  let s:ctx.force_stop = 1
+  let g:acf_disable_auto_complete = 1
 endfunction
 
 function! acf#complete_done() abort
@@ -356,8 +361,13 @@ function! acf#complete_done() abort
   call s:DebugMsg(2, "CompleteDone", v:completed_item)
 endfunction
 
-function! acf#get_completion() abort
+function! acf#get_completion(manual) abort
+  if a:manual
+    let s:ctx = s:init_ctx()
+    call acf#save_cursor_pos()
+  endif
   call s:cb_get_completion(-1)
+  return ""
 endfunction
 
 function! acf#get_context() abort

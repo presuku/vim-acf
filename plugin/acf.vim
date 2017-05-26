@@ -40,6 +40,10 @@ augroup InitAcfEvent
 augroup END
 
 " ==============================================================================
+inoremap <silent><buffer> <Plug>(acf-manual-complete)
+      \ <C-r>=acf#get_completion(1)<CR>
+
+" ==============================================================================
 " Restore cpo
 let &cpo = s:save_cpo
 unlet s:save_cpo
