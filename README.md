@@ -24,18 +24,21 @@ Plug 'presuku/vim-acf.vim'
 ## Usage
 
 ### Options
+
 ```vim script
 let g:acf_update_time = 250 " default 250ms
 ```
 
 ### Recommend setting
+
 ```vim script
 set completeopt=menuone,noselect,noinsert
 ```
 
 ### Add rules to trigger `func`.
+
 * C or other
-    First, you need to install the omnifunc plugin for each language (ex. vim-clag for C).
+  * First, you need to install the omnifunc plugin for each language (ex. vim-clag for C).
 ```vim script
 call acf#add_rule({
       \ 'filetype' : ['c'],
@@ -52,6 +55,7 @@ call acf#add_rule({
       \ 'func'     : function("feedkeys", ["\<C-x>\<C-o>"]),
       \})
 ```
+
 * Vim script
 ```vim script
 call acf#add_rule({
@@ -61,6 +65,7 @@ call acf#add_rule({
       \ 'func'     : function("feedkeys", ["\<C-x>\<C-v>"]),
       \})
 ```
+
 * For any filetype.
 ```vim script
 call acf#add_rule({
@@ -104,6 +109,7 @@ call acf#add_rule({
 ```
 
 ## Thanks
+
 * [lexima.vim](https://github.com/cohama/lexima.vim) by @cohama
   * Base plugin system from this plugin, 
     and a lot of vim script to be used for reference or study.
@@ -112,5 +118,6 @@ call acf#add_rule({
   * Just idea from this plugin.
 
 ## License
+
 MIT (c) @presuku
 
