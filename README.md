@@ -44,7 +44,7 @@ call acf#add_rule({
       \ 'filetype' : ['c'],
       \ 'priority' : 8,
       \ 'at'       : '/\%#',
-      \ 'func'     : function("feedkeys", ["\<C-x>\<C-f>"]),
+      \ 'func'     : function("feedkeys", ["\<C-x>\<C-f>", "n"]),
       \ 'syntax'   : ['Comment', 'String']
       \})
 
@@ -52,7 +52,7 @@ call acf#add_rule({
       \ 'filetype' : ['c', 'cpp', 'java'],
       \ 'priority' : 9,
       \ 'at'       : '\k\{1,}\%(\.\|->\|::\)\%#',
-      \ 'func'     : function("feedkeys", ["\<C-x>\<C-o>"]),
+      \ 'func'     : function("feedkeys", ["\<C-x>\<C-o>", "n"]),
       \})
 ```
 
@@ -62,7 +62,7 @@ call acf#add_rule({
       \ 'filetype' : ['vim'],
       \ 'priority' : 9,
       \ 'at'       : '\%(\k\|:\)\{1,}\%#',
-      \ 'func'     : function("feedkeys", ["\<C-x>\<C-v>"]),
+      \ 'func'     : function("feedkeys", ["\<C-x>\<C-v>", "n"]),
       \})
 ```
 
@@ -72,14 +72,14 @@ call acf#add_rule({
       \ 'filetype' : [''],
       \ 'priority' : 7,
       \ 'at'       : '\k\{3,}\%#',
-      \ 'func'     : function("feedkeys", ["\<C-n>"]),
+      \ 'func'     : function("feedkeys", ["\<C-n>", "n"]),
       \})
 
 call acf#add_rule({
       \ 'filetype' : [''],
       \ 'priority' : 8,
       \ 'at'       : '/\%#',
-      \ 'func'     : function("feedkeys", ["\<C-x>\<C-f>"]),
+      \ 'func'     : function("feedkeys", ["\<C-x>\<C-f>", "n"]),
       \})
 
 let g:nsnip_prefix="snip"
