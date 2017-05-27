@@ -77,15 +77,6 @@ function! s:DebugMsg(level, msg, ...) abort
   endif
 endfunction
 
-function! s:exists(list, item)
-  for l:i in a:list
-    if l:i == a:item
-      return 1
-    endif
-  endfor
-  return 0
-endfunction
-
 function! s:compare(a, b)
   " function! s:sub_cmp(a, b)
   "     return (a:a > a:b) ? 1 : ((a:a < a:b) ? -1 : 0)
@@ -125,7 +116,7 @@ function! acf#add_rule(rule)
     if !has_key(s:rule_list, l:ft)
       let s:rule_list[l:ft] = [a:rule]
     else
-      if !s:exists(s:rule_list[l:ft], a:rule)
+      if index(s:rule_list[l:ft], a:rule) < 0
         call add(s:rule_list[l:ft], a:rule)
       else
         call s:DebugMsg(3, 'already exists a rule', a:rule)
@@ -218,16 +209,16 @@ function! s:get_completion(ft)
       let base = getline('.')[sc-1:cc]
       if !has_key(rule, 'syntax') || empty(rule.syntax)
         let result = s:execute_func(rule, l:sc, l:base)
-        if result
-          return result
+        if l:result
+          return l:result
         endif
       else
         for l:syn in syntax_chain
           if index(rule.syntax, syn) >=# 0
             call s:DebugMsg(3, 'l:syn', l:syn)
             let result = s:execute_func(rule, l:sc, l:base)
-            if result
-              return result
+            if l:result
+              return l:result
             else
               break
             endif
@@ -237,7 +228,7 @@ function! s:get_completion(ft)
     endif
   endfor
 
-  return result 
+  return l:result
 endfunction
 
 function! acf#save_cursor_pos() abort
@@ -251,13 +242,13 @@ function! s:get_saved_cursor_pos() abort
 endfunction
 
 function! acf#stop_timer() abort
-  if !g:acf_disable_auto_complete
-    call s:DebugMsg(0, "stop timer")
-    let info = timer_info(s:ctx.timer_id)
-    if info != []
-      call timer_stop(s:ctx.timer_id)
-    endif
+  call s:DebugMsg(0, "stop timer::")
+  let info = timer_info(s:ctx.timer_id)
+  if !empty(info)
+    call s:DebugMsg(0, "stop timer::stop!!")
+    call timer_stop(s:ctx.timer_id)
   endif
+  let s:ctx = s:init_ctx()
 endfunction
 
 function! s:cb_get_completion(timer_id) abort
@@ -269,7 +260,9 @@ function! s:cb_get_completion(timer_id) abort
 
   " mode check
   if index(ok_mode, s:ctx.mode[0]) < 0
-    call s:DebugMsg(0, "cb_get_completion::callbacked in normal/virtual/other mode")
+    call s:DebugMsg(0,
+          \ "cb_get_completion::callbacked in normal/virtual/other mode",
+          \ s:ctx.mode)
 
     call acf#stop_timer()
     let s:ctx.has_item = -1
@@ -324,11 +317,11 @@ function! s:cb_get_completion(timer_id) abort
     setlocal shm&vim
     setlocal shm+=c
     let result = s:get_completion(&ft)
-    if (result == 0) && (&ft != '')
+    if (l:result == 0) && (&ft != '')
       call s:DebugMsg(1, 'cb_get_completion::fallback any filetype')
       let result = s:get_completion('')
     endif
-    if result == 0
+    if l:result == 0
       call s:DebugMsg(1, 'cb_get_completion::empty result')
       return
     endif
@@ -345,7 +338,6 @@ function! acf#set_timer() abort
   endif
   call s:DebugMsg(0, "set timer::")
   call acf#stop_timer()
-  let s:ctx = s:init_ctx()
   call acf#get_completion(0)
   let s:ctx.timer_id =
         \ timer_start(g:acf_update_time,
