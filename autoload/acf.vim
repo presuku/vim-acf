@@ -343,10 +343,9 @@ function! acf#set_timer() abort
   if g:acf_disable_auto_complete
     return
   endif
-  let s:ctx = s:init_ctx()
   call s:DebugMsg(0, "set timer::")
   call acf#stop_timer()
-
+  let s:ctx = s:init_ctx()
   call acf#get_completion(0)
   let s:ctx.timer_id =
         \ timer_start(g:acf_update_time,
@@ -371,7 +370,6 @@ endfunction
 
 function! acf#get_completion(manual) abort
   if a:manual
-    let s:ctx = s:init_ctx()
     call acf#save_cursor_pos()
   endif
   call s:cb_get_completion(-1)
