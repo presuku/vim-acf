@@ -41,10 +41,10 @@ endif
 " ==============================================================================
 if exists('g:acf_use_default_mapping')
       \ && g:acf_use_default_mapping
-  inoremap <expr><silent><buffer> <CR> pumvisible() ? "\<C-y><CR>" : "<CR>"
-  inoremap <expr><silent><buffer> <TAB> pumvisible() ? "\<DOWN>" : "<TAB>"
-  inoremap <expr><silent><buffer> <S-TAB> pumvisible() ? "\<UP>" : "<S-TAB>"
-  imap <expr><silent><buffer> <C-n> pumvisible() ? "\<C-n>" : \<Plug>(acf-manual-complete)"
+  inoremap <expr><silent><buffer> <CR> pumvisible() ? '<C-y><CR>' : '<CR>'
+  inoremap <expr><silent><buffer> <TAB> pumvisible() ? '<DOWN>' : '<TAB>'
+  inoremap <expr><silent><buffer> <S-TAB> pumvisible() ? '<UP>' : '<S-TAB>'
+  imap <expr><silent><buffer> <C-n> pumvisible() ? '<C-n>' : '<Plug>(acf-manual-complete)'
 endif
 
 " ==============================================================================
