@@ -261,28 +261,34 @@ function! acf#stop_timer() abort
 endfunction
 
 function! s:cb_get_completion(timer_id) abort
+  let ok_mode = ['i', 'R']
   let s:ctx.mode = mode(1)
   let l:saved = s:get_saved_cursor_pos()
   let l:current = getpos('.')
   call acf#save_cursor_pos()
 
-  if s:ctx.mode ==# 'n'
-    call s:DebugMsg(0, "cb_get_completion::callbacked in normal mode")
+  " mode check
+  if index(ok_mode, s:ctx.mode[0]) < 0
+    call s:DebugMsg(0, "cb_get_completion::callbacked in normal/virtual/other mode")
+
     call acf#stop_timer()
-    return
-  endif
-
-  if s:ctx.mode =~# '\wx'
     let s:ctx.has_item = -1
-    call s:DebugMsg(1, "cb_get_completion::ctrlx ix/Rx mode", s:ctx.mode)
     return
   endif
 
+  " ix / Rx mode check
+  if len(s:ctx.mode) > 1 && s:ctx.mode[1] ==# 'x'
+    call s:DebugMsg(1, "cb_get_completion::ctrlx ix/Rx mode", s:ctx.mode)
+    let s:ctx.has_item = -1
+    return
+  endif
+
+  " iV / RV
   " Add iV / RV / cV mode patch:
   " https://gist.github.com/presuku/fa7f351e792a9e74bfbd61684f0139ab
-  if s:ctx.mode =~# '\wV'
-    let s:ctx.has_item = -1
+  if len(s:ctx.mode) > 1 && s:ctx.mode[1] ==# 'V'
     call s:DebugMsg(1, "cb_get_completion::ctrlx iV/RV/cV mode", s:ctx.mode)
+    let s:ctx.has_item = -1
     return
   endif
 
@@ -303,7 +309,8 @@ function! s:cb_get_completion(timer_id) abort
     let s:ctx.do_feedkeys = {}
     return
   else
-    if s:ctx.mode =~# '\wc'
+    " ic / Rc
+    if len(s:ctx.mode) > 1 && s:ctx.mode[1] ==# 'c'
       let s:ctx.has_item = -1
       call feedkeys("\<C-e>", "n")
       call s:DebugMsg(1, "cb_get_completion::pum cancel (ctrlx ic/Rc mode)", s:ctx.mode)
