@@ -117,6 +117,9 @@ call acf#add_rule({
 * [SimpleAutoComplPop](https://github.com/roxma/SimpleAutoComplPop) by @roxma, ns9tks
   * Just idea from this plugin.
 
+* [quickrun](http://github.com/thinca/vim-quickrun) by @thinca
+  * Easy and quickly debugging (learning) for vim script.
+
 ## License
 
 MIT (c) @presuku
