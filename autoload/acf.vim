@@ -56,6 +56,7 @@ function! s:init_ctx()
       \ 'startcol'   : 0,
       \ 'base'       : "",
       \ 'do_feedkeys': {},
+      \ 'completed_item_word' : ""
       \}
 endfunction
 
@@ -207,6 +208,11 @@ function! s:get_completion(ft)
           \ searchpos(rule.except, 'bcWn', searchlimit) !=# [0, 0] : 0
     if [sl, sc] !=# [0, 0] && !excepted
       let base = getline('.')[sc-1:cc]
+      call s:DebugMsg(2, "if base ==# s:ctx.completed_item_word", base, s:ctx)
+      if base ==# s:ctx.completed_item_word
+        call s:DebugMsg(2, "if base ==# s:ctx.completed_item_word", base, s:ctx)
+        return 0
+      endif
       if !has_key(rule, 'syntax') || empty(rule.syntax)
         let result = s:execute_func(rule, l:sc, l:base)
         if l:result
@@ -252,7 +258,7 @@ function! acf#stop_timer() abort
 endfunction
 
 function! s:cb_get_completion(timer_id) abort
-  let ok_mode = ['i', 'R']
+  let ok_mode = ['i', 'R', 'c']
   let s:ctx.mode = mode(1)
   let l:saved = s:get_saved_cursor_pos()
   let l:current = getpos('.')
@@ -265,7 +271,6 @@ function! s:cb_get_completion(timer_id) abort
           \ s:ctx.mode)
 
     call acf#stop_timer()
-    let s:ctx.has_item = -1
     return
   endif
 
@@ -288,6 +293,7 @@ function! s:cb_get_completion(timer_id) abort
   if l:saved != l:current
     let s:ctx.has_item = -1
     let s:ctx.do_feedkeys = {}
+    let s:ctx.completed_item_word = ""
     call s:DebugMsg(1, "cb_get_completion::cursor moved i")
     return
   endif
@@ -357,12 +363,20 @@ endfunction
 
 function! acf#complete_done() abort
   call acf#save_cursor_pos()
+  if has_key(v:completed_item, 'word')
+    let s:ctx.completed_item_word = v:completed_item['word']
+  else
+    let s:ctx.completed_item_word = ""
+  endif
   call s:DebugMsg(2, "CompleteDone", v:completed_item)
 endfunction
 
 function! acf#get_completion(manual) abort
   if a:manual
+    call s:DebugMsg(0, "acf#get_completion::manual")
     call acf#save_cursor_pos()
+    let s:ctx.do_feedkeys = {}
+    let s:ctx.completed_item_word = ""
   endif
   call s:cb_get_completion(-1)
   return ""
