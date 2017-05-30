@@ -265,7 +265,6 @@ function! s:cb_get_completion(timer_id) abort
           \ s:ctx.mode)
 
     call acf#stop_timer()
-    let s:ctx.has_item = -1
     return
   endif
 
