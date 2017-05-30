@@ -208,9 +208,7 @@ function! s:get_completion(ft)
           \ searchpos(rule.except, 'bcWn', searchlimit) !=# [0, 0] : 0
     if [sl, sc] !=# [0, 0] && !excepted
       let base = getline('.')[sc-1:cc]
-      call s:DebugMsg(2, "if base ==# s:ctx.completed_item_word", base, s:ctx)
       if base ==# s:ctx.completed_item_word
-        call s:DebugMsg(2, "if base ==# s:ctx.completed_item_word", base, s:ctx)
         return 0
       endif
       if !has_key(rule, 'syntax') || empty(rule.syntax)
@@ -258,7 +256,7 @@ function! acf#stop_timer() abort
 endfunction
 
 function! s:cb_get_completion(timer_id) abort
-  let ok_mode = ['i', 'R', 'c']
+  let ok_mode = ['i', 'R']
   let s:ctx.mode = mode(1)
   let l:saved = s:get_saved_cursor_pos()
   let l:current = getpos('.')
@@ -271,6 +269,7 @@ function! s:cb_get_completion(timer_id) abort
           \ s:ctx.mode)
 
     call acf#stop_timer()
+    let s:ctx.has_item = -1
     return
   endif
 
