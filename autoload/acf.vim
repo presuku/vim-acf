@@ -371,9 +371,11 @@ function! acf#complete_done() abort
 endfunction
 
 function! acf#get_completion(manual) abort
+  call s:DebugMsg(0, "acf#get_completion")
   if a:manual
     call s:DebugMsg(0, "acf#get_completion::manual")
     call acf#save_cursor_pos()
+    let s:ctx.has_item = -1
     let s:ctx.do_feedkeys = {}
     let s:ctx.completed_item_word = ""
   endif
