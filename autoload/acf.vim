@@ -288,6 +288,15 @@ function! s:cb_get_completion(timer_id) abort
     return
   endif
 
+  " ir / Rr
+  " Add ir / Rr / cr mode patch:
+  " https://gist.github.com/presuku/dc6bb11dfdb83535d82b1b6d7310e5bf
+  if len(s:ctx.mode) > 1 && s:ctx.mode[1] ==# 'r'
+    call s:DebugMsg(1, "cb_get_completion::ctrlx ir/Rr/cr mode", s:ctx.mode)
+    let s:ctx.has_item = -1
+    return
+  endif
+
   if l:saved != l:current
     let s:ctx.has_item = -1
     let s:ctx.do_feedkeys = {}
