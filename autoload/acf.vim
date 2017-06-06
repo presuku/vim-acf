@@ -48,7 +48,7 @@ if exists('g:acf_use_default_mapping')
 endif
 
 " ==============================================================================
-function! s:init_ctx()
+function! s:init_ctx() abort
   return {
       \ 'pos'        : [],
       \ 'timer_id'   : -1,
@@ -78,10 +78,7 @@ function! s:DebugMsg(level, msg, ...) abort
   endif
 endfunction
 
-function! s:compare(a, b)
-  " function! s:sub_cmp(a, b)
-  "     return (a:a > a:b) ? 1 : ((a:a < a:b) ? -1 : 0)
-  " endfunction
+function! s:compare(a, b) abort
   let s:sub_cmp = {a, b->(a > b) ? 1 : ((a < b) ? -1 : 0)}
   let r = s:sub_cmp(a:a.priority, a:b.priority)
   if l:r != 0
@@ -102,7 +99,7 @@ function! s:compare(a, b)
   return 0
 endfunction
 
-function! acf#add_rule(rule)
+function! acf#add_rule(rule) abort
   if type(a:rule.filetype) == v:t_list
     let filetypes = a:rule.filetype
     let i = index(filetypes, '')
@@ -129,7 +126,7 @@ function! acf#add_rule(rule)
   endfor
 endfunction
 
-function! s:get_syntax_link_chain()
+function! s:get_syntax_link_chain() abort
   let [b, l, c, o] =  getpos('.')
   let synid = synID(l, c, 1)
 
@@ -151,7 +148,7 @@ function! s:get_syntax_link_chain()
   return synnames
 endfunction
 
-function! s:execute_func(rule, startcol, base)
+function! s:execute_func(rule, startcol, base) abort
   call s:DebugMsg(3, 'a:rule', a:rule)
   call s:DebugMsg(3, 'a:startcol', a:startcol)
   call s:DebugMsg(3, 'a:base', a:base)
@@ -183,7 +180,7 @@ function! s:execute_func(rule, startcol, base)
   endtry
 endfunction
 
-function! s:get_completion(ft)
+function! s:get_completion(ft) abort
   let syntax_chain = s:get_syntax_link_chain()
   let [cb, cl, cc, co] =  getpos('.')
   let searchlimit = l:cl
