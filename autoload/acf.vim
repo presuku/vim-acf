@@ -99,23 +99,59 @@ function! s:compare(a, b) abort
   return 0
 endfunction
 
-function! acf#add_rule(rule) abort
-  if type(a:rule.filetype) == v:t_list
-    let filetypes = a:rule.filetype
-    let i = index(filetypes, '')
-    if i != -1
-      let filetypes[i] = '_'
-    endif
-  else
-    let filetypes = empty(a:rule.filetype) ? ['_'] : [a:rule.filetype]
+let s:default_rule = {
+      \ 'filetype': [],
+      \ 'syntax': [],
+      \ 'except': '',
+      \ 'priority': 0,
+      \ }
+
+function! s:normalize_rule(rule)
+  if !has_key(a:rule, 'at') || !has_key(a:rule, 'func')
+    return {}
   endif
 
-  for l:ft in l:filetypes
+  " default rule copy to a:rule, and keep exist keys.
+  let nrule = extend(deepcopy(a:rule), s:default_rule, 'keep')
+
+  " filetype
+  if type(l:nrule.filetype) !=# v:t_list
+    let l:nrule.filetype = [nrule.filetype]
+  endif
+  if empty(l:nrule.filetype)
+    " [] => ['_']
+    let l:nrule.filetype = ['_']
+  else
+    " ['' , 'vim'] => ['_', 'vim']
+    let i = index(l:nrule.filetype, '')
+    if i > -1
+      let l:nrule.filetype[i] = '_'
+    endif
+  endif
+
+  " syntax
+  if type(l:nrule.syntax) !=# v:t_list
+    let l:nrule.syntax = [nrule.syntax]
+  endif
+
+  return l:nrule
+endfunction
+
+
+function! acf#add_rule(rule) abort
+  " normalize user input.
+  let nrule = s:normalize_rule(a:rule)
+  if empty(l:nrule)
+    echomsg 'ERROR: In acf#add_rule(), input rule is invalid:' . string(a:rule)
+    return
+  endif
+
+  for l:ft in l:nrule.filetype
     if !has_key(s:rule_list, l:ft)
-      let s:rule_list[l:ft] = [a:rule]
+      let s:rule_list[l:ft] = [l:nrule]
     else
-      if index(s:rule_list[l:ft], a:rule) < 0
-        call add(s:rule_list[l:ft], a:rule)
+      if index(s:rule_list[l:ft], l:nrule) < 0
+        call add(s:rule_list[l:ft], l:nrule)
       else
         call s:DebugMsg(3, 'already exists a rule', a:rule)
         return
