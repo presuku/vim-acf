@@ -64,23 +64,23 @@ let s:ctx = s:init_ctx()
 
 let s:rule_list = {}
 
-function! s:sharplen(msg)
+function! s:hashlen(msg)
   let n_msg = strlen(a:msg)
-  let n_sharp = 0
+  let n_hash = 0
   let i = 0
 
   while i < n_msg
     let ch = a:msg[i]
 
     if ch ==# '#'
-      let n_sharp = n_sharp + 1
+      let n_hash = n_hash + 1
     else
       break
     endif
     let i = i + 1
   endwhile
 
-  return n_sharp
+  return n_hash
 endfunction
 
 function! s:DbgMsg(msg, ...) abort
