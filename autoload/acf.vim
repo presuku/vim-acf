@@ -84,7 +84,7 @@ fu! s:hashlen(msg)
 endf
 
 fu! s:DbgMsg(msg, ...) abort
-  let dbg_lv = s:sharplen(a:msg)
+  let dbg_lv = s:hashlen(a:msg)
   if l:dbg_lv < g:acf_debug
     if a:0 == 0
       let msg = a:msg
