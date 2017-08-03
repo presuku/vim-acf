@@ -64,28 +64,8 @@ let s:ctx = s:init_ctx()
 
 let s:rule_list = {}
 
-function! s:hashlen(msg)
-  let n_msg = strlen(a:msg)
-  let n_hash = 0
-  let i = 0
-
-  while i < n_msg
-    let ch = a:msg[i]
-
-    if ch ==# '#'
-      let n_hash = n_hash + 1
-    else
-      break
-    endif
-    let i = i + 1
-  endwhile
-
-  return n_hash
-endfunction
-
-function! s:DbgMsg(msg, ...) abort
-  let dbg_lv = s:sharplen(a:msg)
-  if l:dbg_lv < g:acf_debug
+function! s:DebugMsg(level, msg, ...) abort
+  if a:level < g:acf_debug
     if a:0 == 0
       let msg = a:msg
     else
@@ -94,7 +74,7 @@ function! s:DbgMsg(msg, ...) abort
         let msg = l:msg . ', ' . string(l:i)
       endfor
     endif
-    echomsg "Dbg" . ":" . l:msg
+    echomsg "Debug" . string(a:level) . ":" . l:msg
   endif
 endfunction
 
@@ -173,7 +153,7 @@ function! acf#add_rule(rule) abort
       if index(s:rule_list[l:ft], l:nrule) < 0
         call add(s:rule_list[l:ft], l:nrule)
       else
-        call s:DbgMsg('### already exists a rule', a:rule)
+        call s:DebugMsg(3, 'already exists a rule', a:rule)
         return
       endif
 
@@ -199,15 +179,15 @@ function! s:get_syntax_link_chain() abort
   endwhile
 
   let synnames =  map(synids, {key, val->synIDattr(val, "name")})
-  call s:DbgMsg('## get_syntax_link_chain::syntax', synnames)
+  call s:DebugMsg(2, 'syntax', synnames)
 
   return synnames
 endfunction
 
 function! s:execute_func(rule, startcol, base) abort
-  call s:DbgMsg('### s:execute_func::a:rule', a:rule)
-  call s:DbgMsg('### s:execute_func::a:startcol', a:startcol)
-  call s:DbgMsg('### s:execute_func::a:base', a:base)
+  call s:DebugMsg(3, 'a:rule', a:rule)
+  call s:DebugMsg(3, 'a:startcol', a:startcol)
+  call s:DebugMsg(3, 'a:base', a:base)
 
   let s:ctx.startcol = a:startcol
   let s:ctx.base = a:base
@@ -218,18 +198,18 @@ function! s:execute_func(rule, startcol, base) abort
   try
     call a:rule.func()
   catch
-    call s:DbgMsg("### s:execute_func::some error", v:exception)
+    call s:DebugMsg(3, "some error", v:exception)
     return -1
   finally
     if pumvisible()
-      call s:DbgMsg("### s:execute_func::has item(s)")
+      call s:DebugMsg(3, "has item(s)")
       return 1
     else
       if !empty(s:ctx.do_feedkeys)
-        call s:DbgMsg('### s:execute_func::no item, but do_feedkeys')
+        call s:DebugMsg(3, 'no item, but do_feedkeys')
         return 1
       else
-        call s:DbgMsg("### s:execute_func::no item")
+        call s:DebugMsg(3, "no item")
         return 0
       endif
     endif
@@ -243,11 +223,11 @@ function! s:get_completion(ft) abort
   let ft = (a:ft ==# '') ? '_' : a:ft
   let result = 0
 
-  call s:DbgMsg('## s:get_completion::ft', a:ft)
+  call s:DebugMsg(2, 'a:ft', a:ft)
   let rules = has_key(s:rule_list, l:ft) ? s:rule_list[l:ft] : []
   for l:rule in rules
-    call s:DbgMsg("### s:get_completion::rule", l:rule)
-    call s:DbgMsg("### s:get_completion::do_feedkeys", s:ctx.do_feedkeys)
+    call s:DebugMsg(3, "###rurles###", l:rule)
+    call s:DebugMsg(3, "###do_feedkeys###", s:ctx.do_feedkeys)
     if !empty(s:ctx.do_feedkeys)
       if l:rule != s:ctx.do_feedkeys
         continue
@@ -272,7 +252,7 @@ function! s:get_completion(ft) abort
       else
         for l:syn in syntax_chain
           if index(rule.syntax, syn) >=# 0
-            call s:DbgMsg("### s:get_completion::syn", l:syn)
+            call s:DebugMsg(3, 'l:syn', l:syn)
             let result = s:execute_func(rule, l:sc, l:base)
             if l:result
               return l:result
@@ -290,19 +270,19 @@ endfunction
 
 function! acf#save_cursor_pos() abort
   let s:ctx.pos = getpos('.')
-  call s:DbgMsg("## save pos", s:ctx.pos)
+  call s:DebugMsg(2, "save pos", s:ctx.pos)
 endfunction
 
 function! s:get_saved_cursor_pos() abort
-  call s:DbgMsg("## get saved pos", s:ctx.pos)
+  call s:DebugMsg(2, "get saved pos", s:ctx.pos)
   return s:ctx.pos
 endfunction
 
 function! acf#stop_timer() abort
-  call s:DbgMsg("acf#stop_timer")
+  call s:DebugMsg(0, "stop timer::")
   let info = timer_info(s:ctx.timer_id)
   if !empty(info)
-    call s:DbgMsg("acf#stop_timer::stop timer!!")
+    call s:DebugMsg(0, "stop timer::stop!!")
     call timer_stop(s:ctx.timer_id)
   endif
   let s:ctx = s:init_ctx()
@@ -317,8 +297,8 @@ function! s:cb_get_completion(timer_id) abort
 
   " mode check
   if index(ok_mode, s:ctx.mode[0]) < 0
-    call s:DbgMsg(
-          \ "s:cb_get_completion::callbacked in normal/virtual/other mode",
+    call s:DebugMsg(0,
+          \ "cb_get_completion::callbacked in normal/virtual/other mode",
           \ s:ctx.mode)
 
     call acf#stop_timer()
@@ -327,7 +307,7 @@ function! s:cb_get_completion(timer_id) abort
 
   " ix / Rx mode check
   if len(s:ctx.mode) > 1 && s:ctx.mode[1] ==# 'x'
-    call s:DbgMsg("s:cb_get_completion::ctrlx ix/Rx mode", s:ctx.mode)
+    call s:DebugMsg(1, "cb_get_completion::ctrlx ix/Rx mode", s:ctx.mode)
     let s:ctx.has_item = -1
     return
   endif
@@ -336,7 +316,7 @@ function! s:cb_get_completion(timer_id) abort
   " Add iV / RV / cV mode patch:
   " https://gist.github.com/presuku/fa7f351e792a9e74bfbd61684f0139ab
   if len(s:ctx.mode) > 1 && s:ctx.mode[1] ==# 'V'
-    call s:DbgMsg("# s:cb_get_completion::ctrlx iV/RV/cV mode", s:ctx.mode)
+    call s:DebugMsg(1, "cb_get_completion::ctrlx iV/RV/cV mode", s:ctx.mode)
     let s:ctx.has_item = -1
     return
   endif
@@ -345,7 +325,7 @@ function! s:cb_get_completion(timer_id) abort
   " Add ir / Rr / cr mode patch:
   " https://gist.github.com/presuku/dc6bb11dfdb83535d82b1b6d7310e5bf
   if len(s:ctx.mode) > 1 && s:ctx.mode[1] ==# 'r'
-    call s:DbgMsg("# s:cb_get_completion::ctrlx ir/Rr/cr mode", s:ctx.mode)
+    call s:DebugMsg(1, "cb_get_completion::ctrlx ir/Rr/cr mode", s:ctx.mode)
     let s:ctx.has_item = -1
     return
   endif
@@ -354,17 +334,17 @@ function! s:cb_get_completion(timer_id) abort
     let s:ctx.has_item = -1
     let s:ctx.do_feedkeys = {}
     let s:ctx.completed_item_word = ""
-    call s:DbgMsg("# s:cb_get_completion::cursor moved i")
+    call s:DebugMsg(1, "cb_get_completion::cursor moved i")
     return
   endif
 
   if s:ctx.has_item == 0
-    call s:DbgMsg("s:cb_get_completion::no item")
+    call s:DebugMsg(0, "cb_get_completion::no item")
     return
   endif
 
   if pumvisible()
-    call s:DbgMsg("## s:cb_get_completion::pumvisible")
+    call s:DebugMsg(2, "cb_get_completion::pumvisible")
     let s:ctx.do_feedkeys = {}
     return
   else
@@ -372,29 +352,29 @@ function! s:cb_get_completion(timer_id) abort
     if len(s:ctx.mode) > 1 && s:ctx.mode[1] ==# 'c'
       let s:ctx.has_item = -1
       call feedkeys("\<C-e>", "n")
-      call s:DbgMsg("# s:cb_get_completion::pum cancel (ctrlx ic/Rc mode)", s:ctx.mode)
+      call s:DebugMsg(1, "cb_get_completion::pum cancel (ctrlx ic/Rc mode)", s:ctx.mode)
       return
     endif
   endif
 
-  call s:DbgMsg("# s:cb_get_completion::cursor hold i")
+  call s:DebugMsg(1, "cb_get_completion::cursor hold i")
   try
     let save_shm = &l:shm
     setlocal shm&vim
     setlocal shm+=c
     let result = s:get_completion(&ft)
     if (l:result == 0) && (&ft != '')
-      call s:DbgMsg("# s:cb_get_completion::fallback any filetype")
+      call s:DebugMsg(1, 'cb_get_completion::fallback any filetype')
       let result = s:get_completion('')
     endif
     if l:result == 0
-      call s:DbgMsg("# s:cb_get_completion::empty result")
+      call s:DebugMsg(1, 'cb_get_completion::empty result')
       return
     endif
   finally
     let &l:shm = l:save_shm
     let s:ctx.has_item = !empty(s:ctx.do_feedkeys) ? -1 : l:result
-    call s:DbgMsg("# s:cb_get_completion::has_item", s:ctx.has_item)
+    call s:DebugMsg(1, 'cb_get_completion::has_item', s:ctx.has_item)
   endtry
 endfunction
 
@@ -402,7 +382,7 @@ function! acf#set_timer() abort
   if g:acf_disable_auto_complete
     return
   endif
-  call s:DbgMsg("acf#set_timer")
+  call s:DebugMsg(0, "set timer::")
   call acf#stop_timer()
   call acf#get_completion(0)
   let s:ctx.timer_id =
@@ -428,13 +408,13 @@ function! acf#complete_done() abort
   else
     let s:ctx.completed_item_word = ""
   endif
-  call s:DbgMsg("## acf#complete_done", v:completed_item)
+  call s:DebugMsg(2, "CompleteDone", v:completed_item)
 endfunction
 
 function! acf#get_completion(manual) abort
-  call s:DbgMsg("acf#get_completion")
+  call s:DebugMsg(0, "acf#get_completion")
   if a:manual
-    call s:DbgMsg("acf#get_completion::manual")
+    call s:DebugMsg(0, "acf#get_completion::manual")
     call acf#save_cursor_pos()
     let s:ctx.has_item = -1
     let s:ctx.do_feedkeys = {}
