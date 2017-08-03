@@ -3,7 +3,7 @@
 " AUTHOR: presuku
 " LICENSE: MIT license. see ../LICENSE.txt
 " ==============================================================================
-scriptencoding utf-8
+scripte utf-8
 
 " ==============================================================================
 " Version Check
@@ -12,7 +12,7 @@ if ! (has('timers')
       \ && has('patch-8.0.0283')
       \)
   finish
-endif
+en
 
 " ==============================================================================
 " Save cpo {{{
@@ -24,32 +24,32 @@ set cpo&vim
 " Init variables
 if !exists('g:acf_update_time')
   let g:acf_update_time = 250
-endif
+en
 
 if !exists('g:acf_disable_auto_complete')
   let g:acf_disable_auto_complete = 0
-endif
+en
 
 if !exists('g:acf_use_default_mapping')
   let g:acf_use_default_mapping = 0
-endif
+en
 
 if !exists('g:acf_debug')
   let g:acf_debug = 0
-endif
+en
 
 " ==============================================================================
 if exists('g:acf_use_default_mapping')
       \ && g:acf_use_default_mapping
-  inoremap <expr><silent><buffer> <CR> pumvisible() ? '<C-y><CR>' : '<CR>'
-  inoremap <expr><silent><buffer> <TAB> pumvisible() ? '<DOWN>' : '<TAB>'
-  inoremap <expr><silent><buffer> <S-TAB> pumvisible() ? '<UP>' : '<S-TAB>'
-  imap <expr><silent><buffer> <C-n> pumvisible() ? '<C-n>' : '<Plug>(acf-manual-complete)'
-endif
+  ino <expr><silent><buffer> <CR> pumvisible() ? '<C-y><CR>' : '<CR>'
+  ino <expr><silent><buffer> <TAB> pumvisible() ? '<DOWN>' : '<TAB>'
+  ino <expr><silent><buffer> <S-TAB> pumvisible() ? '<UP>' : '<S-TAB>'
+  im <expr><silent><buffer> <C-n> pumvisible() ? '<C-n>' : '<Plug>(acf-manual-complete)'
+en
 
 " ==============================================================================
-function! s:init_ctx() abort
-  return {
+fu! s:init_ctx() abort
+  retu {
       \ 'pos'        : [],
       \ 'timer_id'   : -1,
       \ 'has_item'   : -1,
@@ -58,66 +58,66 @@ function! s:init_ctx() abort
       \ 'do_feedkeys': {},
       \ 'completed_item_word' : ""
       \}
-endfunction
+endf
 
 let s:ctx = s:init_ctx()
 
 let s:rule_list = {}
 
-function! s:hashlen(msg)
+fu! s:hashlen(msg)
   let n_msg = strlen(a:msg)
   let n_hash = 0
   let i = 0
 
-  while i < n_msg
+  wh i < n_msg
     let ch = a:msg[i]
 
     if ch ==# '#'
       let n_hash = n_hash + 1
-    else
-      break
-    endif
+    el
+      brea
+    en
     let i = i + 1
-  endwhile
+  endw
 
-  return n_hash
-endfunction
+  retu n_hash
+endf
 
-function! s:DbgMsg(msg, ...) abort
-  let dbg_lv = s:hashlen(a:msg)
+fu! s:DbgMsg(msg, ...) abort
+  let dbg_lv = s:sharplen(a:msg)
   if l:dbg_lv < g:acf_debug
     if a:0 == 0
       let msg = a:msg
-    else
+    el
       let msg = a:msg . ":" . string(a:000[0])
       for l:i in a:000[1:]
         let msg = l:msg . ', ' . string(l:i)
-      endfor
-    endif
-    echomsg "Dbg" . ":" . l:msg
-  endif
-endfunction
+      endfo
+    en
+    echom "Dbg" . ":" . l:msg
+  en
+endf
 
-function! s:compare(a, b) abort
+fu! s:compare(a, b) abort
   let s:sub_cmp = {a, b->(a > b) ? 1 : ((a < b) ? -1 : 0)}
   let r = s:sub_cmp(a:a.priority, a:b.priority)
   if l:r != 0
-    return r
-  endif
+    retu r
+  en
   let r = s:sub_cmp(len(a:a.at), len(a:b.at))
   if l:r != 0
-    return r
-  endif
+    retu r
+  en
   let r = s:sub_cmp(len(a:a.except), len(a:b.except))
   if l:r != 0
-    return r
-  endif
+    retu r
+  en
   let r = s:sub_cmp(len(a:a.syntax), len(a:b.syntax))
   if l:r != 0
-    return r
-  endif
-  return 0
-endfunction
+    retu r
+  en
+  retu 0
+endf
 
 let s:default_rule = {
       \ 'filetype': [],
@@ -126,10 +126,10 @@ let s:default_rule = {
       \ 'priority': 0,
       \ }
 
-function! s:normalize_rule(rule)
+fu! s:normalize_rule(rule)
   if !has_key(a:rule, 'at') || !has_key(a:rule, 'func')
-    return {}
-  endif
+    retu {}
+  en
 
   " default rule copy to a:rule, and keep exist keys.
   let nrule = extend(deepcopy(a:rule), s:default_rule, 'keep')
@@ -137,77 +137,77 @@ function! s:normalize_rule(rule)
   " filetype
   if type(l:nrule.filetype) !=# v:t_list
     let l:nrule.filetype = [nrule.filetype]
-  endif
+  en
   if empty(l:nrule.filetype)
     " [] => ['_']
     let l:nrule.filetype = ['_']
-  else
+  el
     " ['' , 'vim'] => ['_', 'vim']
     let i = index(l:nrule.filetype, '')
     if i > -1
       let l:nrule.filetype[i] = '_'
-    endif
-  endif
+    en
+  en
 
   " syntax
   if type(l:nrule.syntax) !=# v:t_list
     let l:nrule.syntax = [nrule.syntax]
-  endif
+  en
 
-  return l:nrule
-endfunction
+  retu l:nrule
+endf
 
 
-function! acf#add_rule(rule) abort
+fu! acf#add_rule(rule) abort
   " normalize user input.
   let nrule = s:normalize_rule(a:rule)
   if empty(l:nrule)
-    echomsg 'ERROR: In acf#add_rule(), input rule is invalid:' . string(a:rule)
-    return
-  endif
+    echom 'ERROR: In acf#add_rule(), input rule is invalid:' . string(a:rule)
+    retu
+  en
 
   for l:ft in l:nrule.filetype
     if !has_key(s:rule_list, l:ft)
       let s:rule_list[l:ft] = [l:nrule]
-    else
+    el
       if index(s:rule_list[l:ft], l:nrule) < 0
-        call add(s:rule_list[l:ft], l:nrule)
-      else
-        call s:DbgMsg('### already exists a rule', a:rule)
-        return
-      endif
+        cal add(s:rule_list[l:ft], l:nrule)
+      el
+        cal s:DbgMsg('### already exists a rule', a:rule)
+        retu
+      en
 
-      call sort(s:rule_list[l:ft], {a, b -> s:compare(a, b)})
-    endif
-  endfor
-endfunction
+      cal sort(s:rule_list[l:ft], {a, b -> s:compare(a, b)})
+    en
+  endfo
+endf
 
-function! s:get_syntax_link_chain() abort
+fu! s:get_syntax_link_chain() abort
   let [b, l, c, o] =  getpos('.')
   let synid = synID(l, c, 1)
 
   let synids = []
-  call add(synids, synid)
+  cal add(synids, synid)
   while 1
     let trans_synid = synIDtrans(synid)
     if synid == trans_synid
-      break
-    else
-      call add(synids, trans_synid)
-    endif
+      brea
+    el
+      cal add(synids, trans_synid)
+    en
     let synid = trans_synid
-  endwhile
+  endw
 
   let synnames =  map(synids, {key, val->synIDattr(val, "name")})
-  call s:DbgMsg('## get_syntax_link_chain::syntax', synnames)
+  cal s:DbgMsg('## get_syntax_link_chain::syntax', synnames)
 
-  return synnames
-endfunction
+  retu synnames
+endf
 
-function! s:execute_func(rule, startcol, base) abort
-  call s:DbgMsg('### s:execute_func::a:rule', a:rule)
-  call s:DbgMsg('### s:execute_func::a:startcol', a:startcol)
-  call s:DbgMsg('### s:execute_func::a:base', a:base)
+fu! s:execute_func(rule, startcol, base) abort
+  cal s:DbgMsg('### s:execute_func::a:rule', a:rule)
+  cal s:DbgMsg('### s:execute_func::a:startcol', a:startcol)
+  cal s:DbgMsg('### s:execute_func::a:base', a:base)
 
   let s:ctx.startcol = a:startcol
   let s:ctx.base = a:base
@@ -216,237 +216,237 @@ function! s:execute_func(rule, startcol, base) abort
         \ : {}
 
   try
-    call a:rule.func()
-  catch
-    call s:DbgMsg("### s:execute_func::some error", v:exception)
-    return -1
-  finally
+    cal a:rule.func()
+  cat
+    cal s:DbgMsg("### s:execute_func::some error", v:exception)
+    retu -1
+  fina
     if pumvisible()
-      call s:DbgMsg("### s:execute_func::has item(s)")
-      return 1
-    else
+      cal s:DbgMsg("### s:execute_func::has item(s)")
+      retu 1
+    el
       if !empty(s:ctx.do_feedkeys)
-        call s:DbgMsg('### s:execute_func::no item, but do_feedkeys')
-        return 1
-      else
-        call s:DbgMsg("### s:execute_func::no item")
-        return 0
-      endif
-    endif
-  endtry
-endfunction
+        cal s:DbgMsg('### s:execute_func::no item, but do_feedkeys')
+        retu 1
+      el
+        cal s:DbgMsg("### s:execute_func::no item")
+        retu 0
+      en
+    en
+  endt
+endf
 
-function! s:get_completion(ft) abort
+fu! s:get_completion(ft) abort
   let syntax_chain = s:get_syntax_link_chain()
   let [cb, cl, cc, co] =  getpos('.')
   let searchlimit = l:cl
   let ft = (a:ft ==# '') ? '_' : a:ft
   let result = 0
 
-  call s:DbgMsg('## s:get_completion::ft', a:ft)
+  cal s:DbgMsg('## s:get_completion::ft', a:ft)
   let rules = has_key(s:rule_list, l:ft) ? s:rule_list[l:ft] : []
   for l:rule in rules
-    call s:DbgMsg("### s:get_completion::rule", l:rule)
-    call s:DbgMsg("### s:get_completion::do_feedkeys", s:ctx.do_feedkeys)
+    cal s:DbgMsg("### s:get_completion::rule", l:rule)
+    cal s:DbgMsg("### s:get_completion::do_feedkeys", s:ctx.do_feedkeys)
     if !empty(s:ctx.do_feedkeys)
       if l:rule != s:ctx.do_feedkeys
-        continue
-      else
+        con
+      el
         let s:ctx.do_feedkeys = {}
-        continue
-      endif
-    endif
+        con
+      en
+    en
     let [sl, sc] = searchpos(rule.at, 'bcWn', searchlimit)
     let excepted = has_key(rule, 'except') ?
           \ searchpos(rule.except, 'bcWn', searchlimit) !=# [0, 0] : 0
     if [sl, sc] !=# [0, 0] && !excepted
       let base = getline('.')[sc-1:cc]
       if base ==# s:ctx.completed_item_word
-        return 0
-      endif
+        retu 0
+      en
       if !has_key(rule, 'syntax') || empty(rule.syntax)
         let result = s:execute_func(rule, l:sc, l:base)
         if l:result
-          return l:result
-        endif
-      else
+          retu l:result
+        en
+      el
         for l:syn in syntax_chain
           if index(rule.syntax, syn) >=# 0
-            call s:DbgMsg("### s:get_completion::syn", l:syn)
+            cal s:DbgMsg("### s:get_completion::syn", l:syn)
             let result = s:execute_func(rule, l:sc, l:base)
             if l:result
-              return l:result
-            else
-              break
-            endif
-          endif
-        endfor
-      endif
-    endif
-  endfor
+              retu l:result
+            el
+              brea
+            en
+          en
+        endfo
+      en
+    en
+  endfo
 
-  return l:result
-endfunction
+  retu l:result
+endf
 
-function! acf#save_cursor_pos() abort
+fu! acf#save_cursor_pos() abort
   let s:ctx.pos = getpos('.')
-  call s:DbgMsg("## save pos", s:ctx.pos)
-endfunction
+  cal s:DbgMsg("## save pos", s:ctx.pos)
+endf
 
-function! s:get_saved_cursor_pos() abort
-  call s:DbgMsg("## get saved pos", s:ctx.pos)
-  return s:ctx.pos
-endfunction
+fu! s:get_saved_cursor_pos() abort
+  cal s:DbgMsg("## get saved pos", s:ctx.pos)
+  retu s:ctx.pos
+endf
 
-function! acf#stop_timer() abort
-  call s:DbgMsg("acf#stop_timer")
+fu! acf#stop_timer() abort
+  cal s:DbgMsg("acf#stop_timer")
   let info = timer_info(s:ctx.timer_id)
   if !empty(info)
-    call s:DbgMsg("acf#stop_timer::stop timer!!")
-    call timer_stop(s:ctx.timer_id)
-  endif
+    cal s:DbgMsg("acf#stop_timer::stop timer!!")
+    cal timer_stop(s:ctx.timer_id)
+  en
   let s:ctx = s:init_ctx()
-endfunction
+endf
 
-function! s:cb_get_completion(timer_id) abort
+fu! s:cb_get_completion(timer_id) abort
   let ok_mode = ['i', 'R']
   let s:ctx.mode = mode(1)
   let l:saved = s:get_saved_cursor_pos()
   let l:current = getpos('.')
-  call acf#save_cursor_pos()
+  cal acf#save_cursor_pos()
 
   " mode check
   if index(ok_mode, s:ctx.mode[0]) < 0
-    call s:DbgMsg(
+    cal s:DbgMsg(
           \ "s:cb_get_completion::callbacked in normal/virtual/other mode",
           \ s:ctx.mode)
 
-    call acf#stop_timer()
-    return
-  endif
+    cal acf#stop_timer()
+    retu
+  en
 
   " ix / Rx mode check
   if len(s:ctx.mode) > 1 && s:ctx.mode[1] ==# 'x'
-    call s:DbgMsg("s:cb_get_completion::ctrlx ix/Rx mode", s:ctx.mode)
+    cal s:DbgMsg("s:cb_get_completion::ctrlx ix/Rx mode", s:ctx.mode)
     let s:ctx.has_item = -1
-    return
-  endif
+    retu
+  en
 
   " iV / RV
   " Add iV / RV / cV mode patch:
   " https://gist.github.com/presuku/fa7f351e792a9e74bfbd61684f0139ab
   if len(s:ctx.mode) > 1 && s:ctx.mode[1] ==# 'V'
-    call s:DbgMsg("# s:cb_get_completion::ctrlx iV/RV/cV mode", s:ctx.mode)
+    cal s:DbgMsg("# s:cb_get_completion::ctrlx iV/RV/cV mode", s:ctx.mode)
     let s:ctx.has_item = -1
-    return
-  endif
+    retu
+  en
 
   " ir / Rr
   " Add ir / Rr / cr mode patch:
   " https://gist.github.com/presuku/dc6bb11dfdb83535d82b1b6d7310e5bf
   if len(s:ctx.mode) > 1 && s:ctx.mode[1] ==# 'r'
-    call s:DbgMsg("# s:cb_get_completion::ctrlx ir/Rr/cr mode", s:ctx.mode)
+    cal s:DbgMsg("# s:cb_get_completion::ctrlx ir/Rr/cr mode", s:ctx.mode)
     let s:ctx.has_item = -1
-    return
-  endif
+    retu
+  en
 
   if l:saved != l:current
     let s:ctx.has_item = -1
     let s:ctx.do_feedkeys = {}
     let s:ctx.completed_item_word = ""
-    call s:DbgMsg("# s:cb_get_completion::cursor moved i")
-    return
-  endif
+    cal s:DbgMsg("# s:cb_get_completion::cursor moved i")
+    retu
+  en
 
   if s:ctx.has_item == 0
-    call s:DbgMsg("s:cb_get_completion::no item")
-    return
-  endif
+    cal s:DbgMsg("s:cb_get_completion::no item")
+    retu
+  en
 
   if pumvisible()
-    call s:DbgMsg("## s:cb_get_completion::pumvisible")
+    cal s:DbgMsg("## s:cb_get_completion::pumvisible")
     let s:ctx.do_feedkeys = {}
-    return
-  else
+    retu
+  el
     " ic / Rc
     if len(s:ctx.mode) > 1 && s:ctx.mode[1] ==# 'c'
       let s:ctx.has_item = -1
-      call feedkeys("\<C-e>", "n")
-      call s:DbgMsg("# s:cb_get_completion::pum cancel (ctrlx ic/Rc mode)", s:ctx.mode)
-      return
-    endif
-  endif
+      cal feedkeys("\<C-e>", "n")
+      cal s:DbgMsg("# s:cb_get_completion::pum cancel (ctrlx ic/Rc mode)", s:ctx.mode)
+      retu
+    en
+  en
 
-  call s:DbgMsg("# s:cb_get_completion::cursor hold i")
+  cal s:DbgMsg("# s:cb_get_completion::cursor hold i")
   try
     let save_shm = &l:shm
-    setlocal shm&vim
-    setlocal shm+=c
+    setl shm&vim
+    setl shm+=c
     let result = s:get_completion(&ft)
     if (l:result == 0) && (&ft != '')
-      call s:DbgMsg("# s:cb_get_completion::fallback any filetype")
+      cal s:DbgMsg("# s:cb_get_completion::fallback any filetype")
       let result = s:get_completion('')
-    endif
+    en
     if l:result == 0
-      call s:DbgMsg("# s:cb_get_completion::empty result")
-      return
-    endif
-  finally
+      cal s:DbgMsg("# s:cb_get_completion::empty result")
+      retu
+    en
+  fina
     let &l:shm = l:save_shm
     let s:ctx.has_item = !empty(s:ctx.do_feedkeys) ? -1 : l:result
-    call s:DbgMsg("# s:cb_get_completion::has_item", s:ctx.has_item)
-  endtry
-endfunction
+    cal s:DbgMsg("# s:cb_get_completion::has_item", s:ctx.has_item)
+  endt
+endf
 
-function! acf#set_timer() abort
+fu! acf#set_timer() abort
   if g:acf_disable_auto_complete
-    return
-  endif
-  call s:DbgMsg("acf#set_timer")
-  call acf#stop_timer()
-  call acf#get_completion(0)
+    retu
+  en
+  cal s:DbgMsg("acf#set_timer")
+  cal acf#stop_timer()
+  cal acf#get_completion(0)
   let s:ctx.timer_id =
         \ timer_start(g:acf_update_time,
         \             function('s:cb_get_completion'),
         \             {'repeat':-1}
         \ )
-endfunction
+endf
 
-function! acf#enable_timer() abort
+fu! acf#enable_timer() abort
   let g:acf_disable_auto_complete = 0
-endfunction
+endf
 
-function! acf#disable_timer() abort
-  call acf#stop_timer()
+fu! acf#disable_timer() abort
+  cal acf#stop_timer()
   let g:acf_disable_auto_complete = 1
-endfunction
+endf
 
-function! acf#complete_done() abort
-  call acf#save_cursor_pos()
+fu! acf#complete_done() abort
+  cal acf#save_cursor_pos()
   if has_key(v:completed_item, 'word')
     let s:ctx.completed_item_word = v:completed_item['word']
-  else
+  el
     let s:ctx.completed_item_word = ""
-  endif
-  call s:DbgMsg("## acf#complete_done", v:completed_item)
-endfunction
+  en
+  cal s:DbgMsg("## acf#complete_done", v:completed_item)
+endf
 
-function! acf#get_completion(manual) abort
-  call s:DbgMsg("acf#get_completion")
+fu! acf#get_completion(manual) abort
+  cal s:DbgMsg("acf#get_completion")
   if a:manual
-    call s:DbgMsg("acf#get_completion::manual")
-    call acf#save_cursor_pos()
+    cal s:DbgMsg("acf#get_completion::manual")
+    cal acf#save_cursor_pos()
     let s:ctx.has_item = -1
     let s:ctx.do_feedkeys = {}
     let s:ctx.completed_item_word = ""
-  endif
-  call s:cb_get_completion(-1)
-  return ""
-endfunction
+  en
+  cal s:cb_get_completion(-1)
+  retu ""
+endf
 
-function! acf#get_context() abort
-  return s:ctx
-endfunction
+fu! acf#get_context() abort
+  retu s:ctx
+endf
 
 " ==============================================================================
 " Restore cpo
