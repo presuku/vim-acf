@@ -3,13 +3,13 @@
 " AUTHOR: presuku
 " LICENSE: MIT license. see ../LICENSE.txt
 " ==============================================================================
-scriptencoding utf-8
+scripte utf-8
 
 " ==============================================================================
 " Load Once
 if exists('g:loaded_acf')
-    finish
-endif
+    fini
+en
 let g:loaded_acf = 1
 
 " ==============================================================================
@@ -19,8 +19,8 @@ if ! (has('timers')
       \ && has('patch-8.0.0283')
       \)
   echom "vim-acf support vim8.0.0283 or later"
-  finish
-endif
+  fini
+en
 
 " ==============================================================================
 " Save cpo
@@ -28,23 +28,23 @@ let s:save_cpo = &cpo
 set cpo&vim
 
 " ==============================================================================
-command! AcfEnable call acf#enable_timer()
-command! AcfDisable call acf#disable_timer()
+com! AcfEnable cal acf#enable_timer()
+com! AcfDisable cal acf#disable_timer()
 
 " ==============================================================================
-augroup InitAcfEvent
-  autocmd!
-  autocmd InsertEnter * call acf#set_timer()
-  autocmd InsertLeave * call acf#stop_timer()
-  autocmd CompleteDone * call acf#complete_done()
-augroup END
+aug InitAcfEvent
+  au!
+  au InsertEnter * cal acf#set_timer()
+  au InsertLeave * cal acf#stop_timer()
+  au CompleteDone * cal acf#complete_done()
+aug END
 
 " ==============================================================================
-inoremap <silent><buffer> <Plug>(acf-manual-complete)
+ino <silent><buffer> <Plug>(acf-manual-complete)
       \ <C-r>=acf#get_completion(1)<CR>
 
 " ==============================================================================
 " Restore cpo
 let &cpo = s:save_cpo
-unlet s:save_cpo
+unl s:save_cpo
 
