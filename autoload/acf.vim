@@ -58,7 +58,7 @@ fu! s:init_ctx() abort
       \ 'startcol'   : 0,
       \ 'base'       : "",
       \ 'do_feedkeys': {},
-      \ 'completed_item_word' : ""
+      \ 'ciword' : ""
       \}
 endf
 
@@ -263,7 +263,8 @@ fu! s:get_completion(ft) abort
           \ searchpos(rule.except, 'bcWn', searchlimit) !=# [0, 0] : 0
     if [sl, sc] !=# [0, 0] && !excepted
       let base = getline('.')[sc-1:cc]
-      if base ==# s:ctx.completed_item_word
+      cal s:DbgMsg("### s:get_completion::base, s:ctx.ciword", base, s:ctx.ciword)
+      if base[-strlen(s:ctx.ciword):] ==# s:ctx.ciword
         retu 0
       en
       if !has_key(rule, 'syntax') || empty(rule.syntax)
@@ -355,7 +356,7 @@ fu! s:cb_get_completion(timer_id) abort
   if l:saved != l:current
     let s:ctx.has_item = -1
     let s:ctx.do_feedkeys = {}
-    let s:ctx.completed_item_word = ""
+    let s:ctx.ciword = ""
     cal s:DbgMsg("# s:cb_get_completion::cursor moved i")
     retu
   en
@@ -428,9 +429,9 @@ endf
 fu! acf#complete_done() abort
   cal acf#save_cursor_pos()
   if has_key(v:completed_item, 'word')
-    let s:ctx.completed_item_word = v:completed_item['word']
+    let s:ctx.ciword = v:completed_item['word']
   el
-    let s:ctx.completed_item_word = ""
+    let s:ctx.ciword = ""
   en
   cal s:DbgMsg("## acf#complete_done", v:completed_item)
 endf
@@ -442,7 +443,7 @@ fu! acf#get_completion(manual) abort
     cal acf#save_cursor_pos()
     let s:ctx.has_item = -1
     let s:ctx.do_feedkeys = {}
-    let s:ctx.completed_item_word = ""
+    let s:ctx.ciword = ""
   en
   cal s:cb_get_completion(-1)
   retu ""
