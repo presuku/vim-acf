@@ -38,6 +38,8 @@ if !exists('g:acf_debug')
   let g:acf_debug = 0
 en
 
+let b:save_shm = ''
+
 " ==============================================================================
 if exists('g:acf_use_default_mapping')
       \ && g:acf_use_default_mapping
@@ -379,9 +381,6 @@ fu! s:cb_get_completion(timer_id) abort
 
   cal s:DbgMsg("# s:cb_get_completion::cursor hold i")
   try
-    let save_shm = &l:shm
-    setl shm&vim
-    setl shm+=c
     let result = s:get_completion(&ft)
     if (l:result == 0) && (&ft != '')
       cal s:DbgMsg("# s:cb_get_completion::fallback any filetype")
@@ -392,7 +391,6 @@ fu! s:cb_get_completion(timer_id) abort
       retu
     en
   fina
-    let &l:shm = l:save_shm
     let s:ctx.has_item = !empty(s:ctx.do_feedkeys) ? -1 : l:result
     cal s:DbgMsg("# s:cb_get_completion::has_item", s:ctx.has_item)
   endt
@@ -402,6 +400,10 @@ fu! acf#set_timer() abort
   if g:acf_disable_auto_complete
     retu
   en
+  if b:save_shm !=# ''
+    let b:save_shm = &shm
+  en
+  setl shm+=c
   cal s:DbgMsg("acf#set_timer")
   cal acf#stop_timer()
   cal acf#get_completion(0)
@@ -419,6 +421,8 @@ endf
 fu! acf#disable_timer() abort
   cal acf#stop_timer()
   let g:acf_disable_auto_complete = 1
+  let &shm = b:save_shm
+  let b:save_shm = ''
 endf
 
 fu! acf#complete_done() abort
