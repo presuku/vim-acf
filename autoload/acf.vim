@@ -229,6 +229,7 @@ fu! s:execute_func(rule, startcol, base) abort
     el
       if !empty(s:ctx.do_feedkeys)
         cal s:DbgMsg('### s:execute_func::no item, but do_feedkeys')
+        call timer_start(g:acf_update_time/2, function('s:cb_get_completion'))
         retu 1
       el
         cal s:DbgMsg("### s:execute_func::no item")
