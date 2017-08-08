@@ -38,8 +38,6 @@ if !exists('g:acf_debug')
   let g:acf_debug = 0
 en
 
-let b:save_shm = ''
-
 " ==============================================================================
 if exists('g:acf_use_default_mapping')
       \ && g:acf_use_default_mapping
@@ -309,6 +307,8 @@ fu! acf#stop_timer() abort
     cal timer_stop(s:ctx.timer_id)
   en
   let s:ctx = s:init_ctx()
+  let &shm = b:save_shm
+  let b:save_shm = ''
 endf
 
 fu! s:cb_get_completion(timer_id) abort
@@ -398,14 +398,14 @@ fu! s:cb_get_completion(timer_id) abort
 endf
 
 fu! acf#set_timer() abort
+  cal s:DbgMsg("acf#set_timer")
   if g:acf_disable_auto_complete
     retu
   en
-  if b:save_shm !=# ''
+  if !exists("b:save_shm") || b:save_shm !=# ''
     let b:save_shm = &shm
   en
   setl shm+=c
-  cal s:DbgMsg("acf#set_timer")
   cal acf#stop_timer()
   cal acf#get_completion(0)
   let s:ctx.timer_id =
@@ -422,8 +422,6 @@ endf
 fu! acf#disable_timer() abort
   cal acf#stop_timer()
   let g:acf_disable_auto_complete = 1
-  let &shm = b:save_shm
-  let b:save_shm = ''
 endf
 
 fu! acf#complete_done() abort
