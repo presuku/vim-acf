@@ -429,7 +429,6 @@ fu! acf#set_timer() abort
   en
   setl shm+=c
   cal acf#stop_timer()
-  cal acf#get_completion(0)
   let s:ctx.timer_id =
         \ timer_start(g:acf_update_time,
         \             function('s:cb_get_completion'),
