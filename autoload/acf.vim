@@ -56,7 +56,8 @@ fu! s:init_ctx() abort
       \ 'startcol'   : 0,
       \ 'base'       : "",
       \ 'do_feedkeys': {},
-      \ 'ciword' : ""
+      \ 'ciword'     : "",
+      \ 'busy'       : 0,
       \}
 endf
 
@@ -227,8 +228,7 @@ fu! s:execute_func(rule, startcol, base) abort
     el
       if !empty(s:ctx.do_feedkeys)
         cal s:DbgMsg('### s:execute_func::no item, but do_feedkeys')
-        call timer_start(g:acf_update_time/2, function('s:cb_get_completion'))
-        retu 1
+        retu 2
       el
         cal s:DbgMsg("### s:execute_func::no item")
         retu 0
@@ -319,6 +319,14 @@ fu! s:cb_get_completion(timer_id) abort
   let l:current = getpos('.')
   cal acf#save_cursor_pos()
 
+  " busy check
+  if s:ctx.busy == 1
+    cal s:DbgMsg("s:cb_get_completion::busy")
+    retu
+  el
+    let s:ctx.busy = 1
+  en
+
   " mode check
   if index(ok_mode, s:ctx.mode[0]) < 0
     cal s:DbgMsg(
@@ -326,6 +334,7 @@ fu! s:cb_get_completion(timer_id) abort
           \ s:ctx.mode)
 
     cal acf#stop_timer()
+    let s:ctx.busy = 0
     retu
   en
 
@@ -333,6 +342,7 @@ fu! s:cb_get_completion(timer_id) abort
   if len(s:ctx.mode) > 1 && s:ctx.mode[1] ==# 'x'
     cal s:DbgMsg("s:cb_get_completion::ctrlx ix/Rx mode", s:ctx.mode)
     let s:ctx.has_item = -1
+    let s:ctx.busy = 0
     retu
   en
 
@@ -342,6 +352,7 @@ fu! s:cb_get_completion(timer_id) abort
   if len(s:ctx.mode) > 1 && s:ctx.mode[1] ==# 'V'
     cal s:DbgMsg("# s:cb_get_completion::ctrlx iV/RV/cV mode", s:ctx.mode)
     let s:ctx.has_item = -1
+    let s:ctx.busy = 0
     retu
   en
 
@@ -351,32 +362,37 @@ fu! s:cb_get_completion(timer_id) abort
   if len(s:ctx.mode) > 1 && s:ctx.mode[1] ==# 'r'
     cal s:DbgMsg("# s:cb_get_completion::ctrlx ir/Rr/cr mode", s:ctx.mode)
     let s:ctx.has_item = -1
+    let s:ctx.busy = 0
     retu
   en
 
   if l:saved != l:current
+    cal s:DbgMsg("# s:cb_get_completion::cursor moved i")
     let s:ctx.has_item = -1
     let s:ctx.do_feedkeys = {}
     let s:ctx.ciword = ""
-    cal s:DbgMsg("# s:cb_get_completion::cursor moved i")
+    let s:ctx.busy = 0
     retu
   en
 
   if s:ctx.has_item == 0
     cal s:DbgMsg("s:cb_get_completion::no item")
+    let s:ctx.busy = 0
     retu
   en
 
   if pumvisible()
     cal s:DbgMsg("## s:cb_get_completion::pumvisible")
     let s:ctx.do_feedkeys = {}
+    let s:ctx.busy = 0
     retu
   el
     " ic / Rc
     if len(s:ctx.mode) > 1 && s:ctx.mode[1] ==# 'c'
-      let s:ctx.has_item = -1
       cal feedkeys("\<C-e>", "n")
       cal s:DbgMsg("# s:cb_get_completion::pum cancel (ctrlx ic/Rc mode)", s:ctx.mode)
+      let s:ctx.has_item = -1
+      let s:ctx.busy = 0
       retu
     en
   en
@@ -394,7 +410,12 @@ fu! s:cb_get_completion(timer_id) abort
     en
   fina
     let s:ctx.has_item = !empty(s:ctx.do_feedkeys) ? -1 : l:result
+    if l:result == 2
+      cal s:DbgMsg("s:cb_get_completion::cal 2nd timer_start()")
+      cal timer_start(g:acf_update_time/3, function('s:cb_get_completion'))
+    endif
     cal s:DbgMsg("# s:cb_get_completion::has_item", s:ctx.has_item)
+    let s:ctx.busy = 0
   endt
 endf
 
