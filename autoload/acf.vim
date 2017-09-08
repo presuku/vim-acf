@@ -263,11 +263,13 @@ fu! s:get_completion(ft) abort
     let excepted = has_key(rule, 'except') ?
           \ searchpos(rule.except, 'bcWn', searchlimit) !=# [0, 0] : 0
     if [sl, sc] !=# [0, 0] && !excepted
-      let base = getline('.')[sc-1:cc]
-      cal s:DbgMsg("### s:get_completion::base, s:ctx.ciword", base, s:ctx.ciword)
-      if base[-strlen(s:ctx.ciword):] ==# s:ctx.ciword
-        retu 0
-      en
+      cal s:DbgMsg("#### s:get_completion::sc", sc, ", cc", cc)
+      let base = getline('.')[sc-1:cc-2]
+      cal s:DbgMsg("### s:get_completion::base", base, ", s:ctx.ciword", s:ctx.ciword)
+       if base ==# s:ctx.ciword
+             \ || base[-strlen(s:ctx.ciword):] ==# s:ctx.ciword
+         retu 0
+       en
       if !has_key(rule, 'syntax') || empty(rule.syntax)
         let result = s:execute_func(rule, l:sc, l:base)
         if l:result
