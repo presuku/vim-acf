@@ -313,7 +313,9 @@ fu! acf#stop_timer() abort
     cal timer_stop(s:ctx.timer_id)
   en
   let s:ctx = s:init_ctx()
-  let &shm = b:save_shm
+  if exists("b:save_shm")
+    let &shm = b:save_shm
+  en
   let b:save_shm = ''
 endf
 
@@ -405,15 +407,19 @@ fu! s:cb_get_completion(timer_id) abort
     en
   en
 
+  let l:result = -1
   cal s:DbgMsg("# s:cb_get_completion::cursor hold i")
   try
-    let result = s:get_completion(&ft)
+    let l:result = s:get_completion(&ft)
     if (l:result == 0) && (&ft != '')
       cal s:DbgMsg("# s:cb_get_completion::fallback any filetype")
       let result = s:get_completion('')
     en
     if l:result == 0
       cal s:DbgMsg("# s:cb_get_completion::empty result")
+      retu
+    els
+      cal s:DbgMsg("# s:cb_get_completion::something wrong")
       retu
     en
   fina
