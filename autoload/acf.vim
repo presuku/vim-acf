@@ -248,6 +248,7 @@ fu! s:get_completion(ft) abort
 
   cal s:DbgMsg('## s:get_completion::ft', a:ft)
   let rules = has_key(s:rule_list, l:ft) ? s:rule_list[l:ft] : []
+  cal s:DbgMsg("#### s:get_completion::rules", rules)
   for l:rule in rules
     cal s:DbgMsg("### s:get_completion::rule", l:rule)
     cal s:DbgMsg("### s:get_completion::do_feedkeys", s:ctx.do_feedkeys)
