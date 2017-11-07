@@ -36,6 +36,8 @@ aug InitAcfEvent
   au!
   au InsertEnter * cal acf#set_timer()
   au InsertLeave * cal acf#stop_timer()
+  au WinEnter * cal acf#set_timer()
+  au WinLeave * cal acf#stop_timer()
   au CompleteDone * cal acf#complete_done()
 aug END
 
