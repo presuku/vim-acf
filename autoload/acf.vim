@@ -24,6 +24,8 @@ set cpo&vim
 " Init variables
 if !exists('g:acf_update_time')
   let g:acf_update_time = 250
+elsei g:acf_update_time < 30
+  let g:acf_update_time = 30
 en
 
 if !exists('g:acf_disable_auto_complete')
@@ -261,11 +263,13 @@ fu! s:get_completion(ft) abort
     let excepted = has_key(rule, 'except') ?
           \ searchpos(rule.except, 'bcWn', searchlimit) !=# [0, 0] : 0
     if [sl, sc] !=# [0, 0] && !excepted
-      let base = getline('.')[sc-1:cc]
-      cal s:DbgMsg("### s:get_completion::base, s:ctx.ciword", base, s:ctx.ciword)
-      if base[-strlen(s:ctx.ciword):] ==# s:ctx.ciword
-        retu 0
-      en
+      cal s:DbgMsg("#### s:get_completion::sc", sc, ", cc", cc)
+      let base = getline('.')[sc-1:cc-2]
+      cal s:DbgMsg("### s:get_completion::base", base, ", s:ctx.ciword", s:ctx.ciword)
+       if base ==# s:ctx.ciword
+             \ || base[-strlen(s:ctx.ciword):] ==# s:ctx.ciword
+         retu 0
+       en
       if !has_key(rule, 'syntax') || empty(rule.syntax)
         let result = s:execute_func(rule, l:sc, l:base)
         if l:result
@@ -336,6 +340,8 @@ fu! s:cb_get_completion(timer_id) abort
     cal acf#stop_timer()
     let s:ctx.busy = 0
     retu
+  el
+    let s:ctx.busy = 1
   en
 
   " ix / Rx mode check
@@ -391,7 +397,12 @@ fu! s:cb_get_completion(timer_id) abort
     if len(s:ctx.mode) > 1 && s:ctx.mode[1] ==# 'c'
       cal feedkeys("\<C-e>", "n")
       cal s:DbgMsg("# s:cb_get_completion::pum cancel (ctrlx ic/Rc mode)", s:ctx.mode)
+<<<<<<< HEAD
       let s:ctx.has_item = -1
+=======
+      let s:ctx.do_feedkeys = {}
+      let s:ctx.has_item = 0
+>>>>>>> master
       let s:ctx.busy = 0
       retu
     en
