@@ -433,6 +433,9 @@ endf
 
 fu! acf#set_timer() abort
   cal s:DbgMsg("acf#set_timer")
+  if v:insertmode ==# 'n'
+    retu
+  en
   if g:acf_disable_auto_complete
     retu
   en
