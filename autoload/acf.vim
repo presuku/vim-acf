@@ -323,14 +323,6 @@ fu! s:cb_get_completion(timer_id) abort
   let l:current = getpos('.')
   cal acf#save_cursor_pos()
 
-  " busy check
-  if s:ctx.busy == 1
-    cal s:DbgMsg("s:cb_get_completion::busy")
-    retu
-  el
-    let s:ctx.busy = 1
-  en
-
   " mode check
   if index(ok_mode, s:ctx.mode[0]) < 0
     cal s:DbgMsg(
@@ -339,6 +331,14 @@ fu! s:cb_get_completion(timer_id) abort
 
     cal acf#stop_timer()
     let s:ctx.busy = 0
+    retu
+  el
+    let s:ctx.busy = 1
+  en
+
+  " busy check
+  if s:ctx.busy == 1
+    cal s:DbgMsg("s:cb_get_completion::busy")
     retu
   el
     let s:ctx.busy = 1
@@ -397,12 +397,8 @@ fu! s:cb_get_completion(timer_id) abort
     if len(s:ctx.mode) > 1 && s:ctx.mode[1] ==# 'c'
       cal feedkeys("\<C-e>", "n")
       cal s:DbgMsg("# s:cb_get_completion::pum cancel (ctrlx ic/Rc mode)", s:ctx.mode)
-<<<<<<< HEAD
-      let s:ctx.has_item = -1
-=======
       let s:ctx.do_feedkeys = {}
       let s:ctx.has_item = 0
->>>>>>> master
       let s:ctx.busy = 0
       retu
     en
