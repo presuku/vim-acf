@@ -335,8 +335,6 @@ fu! s:cb_get_completion(timer_id) abort
     cal acf#stop_timer()
     let s:ctx.busy = 0
     retu
-  el
-    let s:ctx.busy = 1
   en
 
   " busy check
