@@ -261,7 +261,7 @@ fu! s:get_completion(ft) abort
       en
     en
     let [sl, sc] = searchpos(rule.at, 'bcWn', searchlimit)
-    let excepted = has_key(rule, 'except') ?
+    let excepted = has_key(rule, 'except') && !empty(rule.except) ?
           \ searchpos(rule.except, 'bcWn', searchlimit) !=# [0, 0] : 0
     if [sl, sc] !=# [0, 0] && !excepted
       cal s:DbgMsg("#### s:get_completion::sc", sc, ", cc", cc)
