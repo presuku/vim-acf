@@ -398,8 +398,7 @@ fu! s:cb_get_completion(timer_id) abort
     if len(s:ctx.mode) > 1 && s:ctx.mode[1] ==# 'c'
       cal feedkeys("\<C-e>", "n")
       cal s:DbgMsg("# s:cb_get_completion::pum cancel (ctrlx ic/Rc mode)", s:ctx.mode)
-      let s:ctx.do_feedkeys = {}
-      let s:ctx.has_item = 0
+      let s:ctx.has_item = -1
       let s:ctx.busy = 0
       retu
     en
