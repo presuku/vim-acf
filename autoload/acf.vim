@@ -67,7 +67,7 @@ let s:ctx = s:init_ctx()
 
 let s:rule_list = {}
 
-fu! s:hashlen(msg)
+fu! s:hashlen(msg) abort
   let n_msg = strlen(a:msg)
   let n_hash = 0
   let i = 0
@@ -129,7 +129,7 @@ let s:default_rule = {
       \ 'priority': 0,
       \ }
 
-fu! s:normalize_rule(rule)
+fu! s:normalize_rule(rule) abort
   if !has_key(a:rule, 'at') || !has_key(a:rule, 'func')
     retu {}
   en
