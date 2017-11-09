@@ -55,6 +55,7 @@ fu! s:init_ctx() abort
       \ 'pos'        : [],
       \ 'timer_id'   : -1,
       \ 'has_item'   : -1,
+      \ 'startline'  : 0,
       \ 'startcol'   : 0,
       \ 'base'       : "",
       \ 'do_feedkeys': {},
@@ -127,6 +128,7 @@ let s:default_rule = {
       \ 'syntax': [],
       \ 'except': '',
       \ 'priority': 0,
+      \ 'not_found': 0,
       \ }
 
 fu! s:normalize_rule(rule) abort
@@ -207,12 +209,13 @@ fu! s:get_syntax_link_chain() abort
   retu synnames
 endf
 
-fu! s:execute_func(rule, startcol, base) abort
+fu! s:execute_func(rule, sl, sc, base) abort
   cal s:DbgMsg('### s:execute_func::a:rule', a:rule)
-  cal s:DbgMsg('### s:execute_func::a:startcol', a:startcol)
+  cal s:DbgMsg('### s:execute_func::a:sl', a:sl, ', sc', a:sc)
   cal s:DbgMsg('### s:execute_func::a:base', a:base)
 
-  let s:ctx.startcol = a:startcol
+  let s:ctx.startline = a:sl
+  let s:ctx.startcol = a:sc
   let s:ctx.base = a:base
   let s:ctx.do_feedkeys = (string(a:rule.func) =~# "function('feedkeys'.*")
         \ ? a:rule
@@ -226,6 +229,7 @@ fu! s:execute_func(rule, startcol, base) abort
   fina
     if pumvisible()
       cal s:DbgMsg("### s:execute_func::has item(s)")
+      let a:rule.not_found = 1
       retu 1
     el
       if !empty(s:ctx.do_feedkeys)
@@ -249,6 +253,7 @@ fu! s:get_completion(ft) abort
   cal s:DbgMsg('## s:get_completion::ft', a:ft)
   let rules = has_key(s:rule_list, l:ft) ? s:rule_list[l:ft] : []
   cal s:DbgMsg("#### s:get_completion::rules", rules)
+
   for l:rule in rules
     cal s:DbgMsg("### s:get_completion::rule", l:rule)
     cal s:DbgMsg("### s:get_completion::do_feedkeys", s:ctx.do_feedkeys)
@@ -261,10 +266,14 @@ fu! s:get_completion(ft) abort
       en
     en
     let [sl, sc] = searchpos(rule.at, 'bcWn', searchlimit)
+    let search_reduce = ((s:ctx.startline ==# sl && s:ctx.startcol <= sc) ?
+          \ rule.not_found : 0)
+    cal s:DbgMsg("### s:get_completion::search_reduce", search_reduce)
+    let rule.not_found = search_reduce
     let excepted = has_key(rule, 'except') && !empty(rule.except) ?
           \ searchpos(rule.except, 'bcWn', searchlimit) !=# [0, 0] : 0
-    if [sl, sc] !=# [0, 0] && !excepted
-      cal s:DbgMsg("#### s:get_completion::sc", sc, ", cc", cc)
+    if [sl, sc] !=# [0, 0] && !excepted && !search_reduce
+      cal s:DbgMsg("#### s:get_completion::sc", sc, "cc", cc)
       let base = getline('.')[sc-1:cc-2]
       cal s:DbgMsg("### s:get_completion::base", base, ", s:ctx.ciword", s:ctx.ciword)
        if base ==# s:ctx.ciword
@@ -272,7 +281,7 @@ fu! s:get_completion(ft) abort
          retu 0
        en
       if !has_key(rule, 'syntax') || empty(rule.syntax)
-        let result = s:execute_func(rule, l:sc, l:base)
+        let result = s:execute_func(rule, l:sl, l:sc, l:base)
         if l:result
           retu l:result
         en
@@ -280,7 +289,7 @@ fu! s:get_completion(ft) abort
         for l:syn in syntax_chain
           if index(rule.syntax, syn) >=# 0
             cal s:DbgMsg("### s:get_completion::syn", l:syn)
-            let result = s:execute_func(rule, l:sc, l:base)
+            let result = s:execute_func(rule, l:sl, l:sc, l:base)
             if l:result
               retu l:result
             el
@@ -398,6 +407,9 @@ fu! s:cb_get_completion(timer_id) abort
     if len(s:ctx.mode) > 1 && s:ctx.mode[1] ==# 'c'
       cal feedkeys("\<C-e>", "n")
       cal s:DbgMsg("# s:cb_get_completion::pum cancel (ctrlx ic/Rc mode)", s:ctx.mode)
+      if !empty(s:ctx.do_feedkeys)
+        let s:ctx.do_feedkeys.not_found = 1
+      endif
       let s:ctx.has_item = -1
       let s:ctx.busy = 0
       retu
