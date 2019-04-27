@@ -179,7 +179,7 @@ fu! acf#add_rule(rule) abort
 endf
 
 fu! s:get_syntax_link_chain() abort
-  let [b, l, c, o] = s:get_saved_cursor_pos()
+  let [l, c] = s:get_saved_cursor_pos()
   let synid = synID(l, c, 1)
   let synids = []
   cal add(synids, synid)
@@ -233,7 +233,7 @@ endf
 
 fu! s:get_completion(ft) abort
   let syntax_chain = s:get_syntax_link_chain()
-  let [cb, cl, cc, co] = s:get_saved_cursor_pos()
+  let [cl, cc] = s:get_saved_cursor_pos()
   let searchlimit = l:cl
   let ft = (a:ft ==# '') ? '_' : a:ft
   let result = 0
@@ -294,12 +294,12 @@ endf
 fu! s:save_cursor_pos() abort
   let s:ctx.pos = getpos('.')
   cal s:DbgMsg("## save pos", s:ctx.pos)
-  retu s:ctx.pos
+  retu s:ctx.pos[1:2]
 endf
 
 fu! s:get_saved_cursor_pos() abort
   cal s:DbgMsg("## get saved pos", s:ctx.pos)
-  retu s:ctx.pos
+  retu s:ctx.pos[1:2]
 endf
 
 fu! acf#stop_timer() abort
