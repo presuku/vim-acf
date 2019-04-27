@@ -105,21 +105,13 @@ endf
 fu! s:compare(a, b) abort
   let s:sub_cmp = {a, b->(a > b) ? 1 : ((a < b) ? -1 : 0)}
   let r = s:sub_cmp(a:a.priority, a:b.priority)
-  if l:r != 0
-    retu r
-  en
+  if l:r != 0 | retu r | en
   let r = s:sub_cmp(len(a:a.at), len(a:b.at))
-  if l:r != 0
-    retu r
-  en
+  if l:r != 0 | retu r | en
   let r = s:sub_cmp(len(a:a.except), len(a:b.except))
-  if l:r != 0
-    retu r
-  en
+  if l:r != 0 | retu r | en
   let r = s:sub_cmp(len(a:a.syntax), len(a:b.syntax))
-  if l:r != 0
-    retu r
-  en
+  if l:r != 0 | retu r | en
   retu 0
 endf
 
@@ -181,16 +173,14 @@ fu! acf#add_rule(rule) abort
         cal s:DbgMsg('### already exists a rule', a:rule)
         retu
       en
-
       cal sort(s:rule_list[l:ft], {a, b -> s:compare(a, b)})
     en
   endfo
 endf
 
 fu! s:get_syntax_link_chain() abort
-  let [b, l, c, o] =  getpos('.')
+  let [b, l, c, o] = s:get_saved_cursor_pos()
   let synid = synID(l, c, 1)
-
   let synids = []
   cal add(synids, synid)
   while 1
@@ -202,10 +192,8 @@ fu! s:get_syntax_link_chain() abort
     en
     let synid = trans_synid
   endw
-
   let synnames =  map(synids, {key, val->synIDattr(val, "name")})
   cal s:DbgMsg('## get_syntax_link_chain::syntax', synnames)
-
   retu synnames
 endf
 
@@ -245,16 +233,16 @@ endf
 
 fu! s:get_completion(ft) abort
   let syntax_chain = s:get_syntax_link_chain()
-  let [cb, cl, cc, co] =  getpos('.')
+  let [cb, cl, cc, co] = s:get_saved_cursor_pos()
   let searchlimit = l:cl
   let ft = (a:ft ==# '') ? '_' : a:ft
   let result = 0
 
   cal s:DbgMsg('## s:get_completion::ft', a:ft)
-  let rules = has_key(s:rule_list, l:ft) ? s:rule_list[l:ft] : []
-  cal s:DbgMsg("#### s:get_completion::rules", rules)
+  let l:rules = has_key(s:rule_list, l:ft) ? s:rule_list[l:ft] : []
+  cal s:DbgMsg("#### s:get_completion::rules", l:rules)
 
-  for l:rule in rules
+  for l:rule in l:rules
     cal s:DbgMsg("### s:get_completion::rule", l:rule)
     cal s:DbgMsg("### s:get_completion::do_feedkeys", s:ctx.do_feedkeys)
     if !empty(s:ctx.do_feedkeys)
@@ -265,48 +253,48 @@ fu! s:get_completion(ft) abort
         con
       en
     en
-    let [sl, sc] = searchpos(rule.at, 'bcWn', searchlimit)
+    let [sl, sc] = searchpos(l:rule.at, 'bcWn', searchlimit)
     let search_reduce = ((s:ctx.startline ==# sl && s:ctx.startcol <= sc) ?
-          \ rule.not_found : 0)
+          \ l:rule.not_found : 0)
     cal s:DbgMsg("### s:get_completion::search_reduce", search_reduce)
-    let rule.not_found = search_reduce
-    let excepted = has_key(rule, 'except') && !empty(rule.except) ?
-          \ searchpos(rule.except, 'bcWn', searchlimit) !=# [0, 0] : 0
-    if [sl, sc] !=# [0, 0] && !excepted && !search_reduce
-      cal s:DbgMsg("#### s:get_completion::sc", sc, "cc", cc)
-      let base = getline('.')[sc-1:cc-2]
-      cal s:DbgMsg("### s:get_completion::base", base, ", s:ctx.ciword", s:ctx.ciword)
-      if base ==# s:ctx.ciword
-            \ || base[-strlen(s:ctx.ciword):] ==# s:ctx.ciword
-        retu 0
-      en
-      if !has_key(rule, 'syntax') || empty(rule.syntax)
-        let result = s:execute_func(rule, l:sl, l:sc, l:base)
+    let l:rule.not_found = search_reduce
+    let excepted = has_key(l:rule, 'except') && !empty(l:rule.except) ?
+          \ searchpos(l:rule.except, 'bcWn', searchlimit) !=# [0, 0] : 0
+    if [sl, sc] ==# [0, 0] || excepted || search_reduce
+      con
+    en
+
+    cal s:DbgMsg("#### s:get_completion::sc", sc, "cc", cc)
+    let base = getline('.')[sc-1:cc-2]
+    cal s:DbgMsg("### s:get_completion::base", base, ", s:ctx.ciword", s:ctx.ciword)
+    if base ==# s:ctx.ciword
+          \ || base[-strlen(s:ctx.ciword):] ==# s:ctx.ciword
+      retu 0
+    en
+    if !has_key(l:rule, 'syntax') || empty(l:rule.syntax)
+      let result = s:execute_func(l:rule, l:sl, l:sc, l:base)
+      if l:result | retu l:result | en
+    el
+      for l:syn in syntax_chain
+        if index(l:rule.syntax, syn) == -1 | con | en
+        cal s:DbgMsg("### s:get_completion::syn", l:syn)
+        let result = s:execute_func(l:rule, l:sl, l:sc, l:base)
         if l:result
           retu l:result
+        el
+          brea
         en
-      el
-        for l:syn in syntax_chain
-          if index(rule.syntax, syn) >=# 0
-            cal s:DbgMsg("### s:get_completion::syn", l:syn)
-            let result = s:execute_func(rule, l:sl, l:sc, l:base)
-            if l:result
-              retu l:result
-            el
-              brea
-            en
-          en
-        endfo
-      en
+      endfo
     en
   endfo
 
   retu l:result
 endf
 
-fu! acf#save_cursor_pos() abort
+fu! s:save_cursor_pos() abort
   let s:ctx.pos = getpos('.')
   cal s:DbgMsg("## save pos", s:ctx.pos)
+  retu s:ctx.pos
 endf
 
 fu! s:get_saved_cursor_pos() abort
@@ -331,9 +319,8 @@ endf
 fu! s:cb_get_completion(timer_id) abort
   let ok_mode = ['i', 'R']
   let s:ctx.mode = mode(1)
-  let l:saved = s:get_saved_cursor_pos()
-  let l:current = getpos('.')
-  cal acf#save_cursor_pos()
+  let l:saved_pos = s:get_saved_cursor_pos()
+  let l:current_pos = s:save_cursor_pos()
 
   " mode check
   if index(ok_mode, s:ctx.mode[0]) < 0
@@ -382,7 +369,7 @@ fu! s:cb_get_completion(timer_id) abort
     retu
   en
 
-  if l:saved != l:current
+  if l:saved_pos != l:current_pos
     cal s:DbgMsg("# s:cb_get_completion::cursor moved i")
     let s:ctx.has_item = -1
     let s:ctx.do_feedkeys = {}
@@ -422,7 +409,7 @@ fu! s:cb_get_completion(timer_id) abort
     let l:result = s:get_completion(&ft)
     if (l:result == 0) && (&ft != '')
       cal s:DbgMsg("# s:cb_get_completion::fallback any filetype")
-      let result = s:get_completion('')
+      let l:result = s:get_completion('')
     en
     if l:result == 0
       cal s:DbgMsg("# s:cb_get_completion::empty result")
@@ -473,7 +460,7 @@ fu! acf#disable_timer() abort
 endf
 
 fu! acf#complete_done() abort
-  cal acf#save_cursor_pos()
+  cal s:save_cursor_pos()
   if has_key(v:completed_item, 'word')
     let s:ctx.ciword = v:completed_item['word']
   el
@@ -486,7 +473,7 @@ fu! acf#get_completion(manual) abort
   cal s:DbgMsg("acf#get_completion")
   if a:manual
     cal s:DbgMsg("acf#get_completion::manual")
-    cal acf#save_cursor_pos()
+    cal s:save_cursor_pos()
     let s:ctx.has_item = -1
     let s:ctx.do_feedkeys = {}
     let s:ctx.ciword = ""
