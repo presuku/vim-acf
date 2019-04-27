@@ -52,16 +52,16 @@ en
 " ==============================================================================
 fu! s:init_ctx() abort
   retu {
-      \ 'pos'        : [],
-      \ 'timer_id'   : -1,
-      \ 'has_item'   : -1,
-      \ 'startline'  : 0,
-      \ 'startcol'   : 0,
-      \ 'base'       : "",
-      \ 'do_feedkeys': {},
-      \ 'ciword'     : "",
-      \ 'busy'       : 0,
-      \}
+        \ 'pos'        : [],
+        \ 'timer_id'   : -1,
+        \ 'has_item'   : -1,
+        \ 'startline'  : 0,
+        \ 'startcol'   : 0,
+        \ 'base'       : "",
+        \ 'do_feedkeys': {},
+        \ 'ciword'     : "",
+        \ 'busy'       : 0,
+        \}
 endf
 
 let s:ctx = s:init_ctx()
@@ -276,10 +276,10 @@ fu! s:get_completion(ft) abort
       cal s:DbgMsg("#### s:get_completion::sc", sc, "cc", cc)
       let base = getline('.')[sc-1:cc-2]
       cal s:DbgMsg("### s:get_completion::base", base, ", s:ctx.ciword", s:ctx.ciword)
-       if base ==# s:ctx.ciword
-             \ || base[-strlen(s:ctx.ciword):] ==# s:ctx.ciword
-         retu 0
-       en
+      if base ==# s:ctx.ciword
+            \ || base[-strlen(s:ctx.ciword):] ==# s:ctx.ciword
+        retu 0
+      en
       if !has_key(rule, 'syntax') || empty(rule.syntax)
         let result = s:execute_func(rule, l:sl, l:sc, l:base)
         if l:result
