@@ -274,7 +274,7 @@ fu! s:get_completion(ft) abort
       if result | retu result | en
     el
       for syn in syntax_chain
-        if index(rule.syntax, syn) == -1 | con | en
+        if index(rule.syntax, syn) < 0 | con | en
         cal s:DbgMsg("### s:get_completion::syn", syn)
         let result = s:execute_func(rule, sl, sc, base)
         if result
