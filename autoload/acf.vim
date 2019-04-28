@@ -75,7 +75,6 @@ fu! s:hashlen(msg) abort
 
   wh i < n_msg
     let ch = a:msg[i]
-
     if ch ==# '#'
       let n_hash = n_hash + 1
     el
@@ -89,29 +88,29 @@ endf
 
 fu! s:DbgMsg(msg, ...) abort
   let dbg_lv = s:hashlen(a:msg)
-  if l:dbg_lv < g:acf_debug
+  if dbg_lv < g:acf_debug
     if a:0 == 0
       let msg = a:msg
     el
       let msg = a:msg . ":" . string(a:000[0])
-      for l:i in a:000[1:]
-        let msg = l:msg . ', ' . string(l:i)
+      for i in a:000[1:]
+        let msg = msg . ', ' . string(i)
       endfo
     en
-    echom "Dbg" . ":" . l:msg
+    echom "Dbg" . ":" . msg
   en
 endf
 
 fu! s:compare(a, b) abort
   let s:sub_cmp = {a, b->(a > b) ? 1 : ((a < b) ? -1 : 0)}
   let r = s:sub_cmp(a:a.priority, a:b.priority)
-  if l:r != 0 | retu r | en
+  if r != 0 | retu r | en
   let r = s:sub_cmp(len(a:a.at), len(a:b.at))
-  if l:r != 0 | retu r | en
+  if r != 0 | retu r | en
   let r = s:sub_cmp(len(a:a.except), len(a:b.except))
-  if l:r != 0 | retu r | en
+  if r != 0 | retu r | en
   let r = s:sub_cmp(len(a:a.syntax), len(a:b.syntax))
-  if l:r != 0 | retu r | en
+  if r != 0 | retu r | en
   retu 0
 endf
 
@@ -132,48 +131,47 @@ fu! s:normalize_rule(rule) abort
   let nrule = extend(deepcopy(a:rule), s:default_rule, 'keep')
 
   " filetype
-  if type(l:nrule.filetype) !=# v:t_list
-    let l:nrule.filetype = [nrule.filetype]
+  if type(nrule.filetype) !=# v:t_list
+    let nrule.filetype = [nrule.filetype]
   en
-  if empty(l:nrule.filetype)
+  if empty(nrule.filetype)
     " [] => ['_']
-    let l:nrule.filetype = ['_']
+    let nrule.filetype = ['_']
   el
     " ['' , 'vim'] => ['_', 'vim']
-    let i = index(l:nrule.filetype, '')
+    let i = index(nrule.filetype, '')
     if i > -1
-      let l:nrule.filetype[i] = '_'
+      let nrule.filetype[i] = '_'
     en
   en
 
   " syntax
-  if type(l:nrule.syntax) !=# v:t_list
-    let l:nrule.syntax = [nrule.syntax]
+  if type(nrule.syntax) !=# v:t_list
+    let nrule.syntax = [nrule.syntax]
   en
 
-  retu l:nrule
+  retu nrule
 endf
 
 
 fu! acf#add_rule(rule) abort
   " normalize user input.
   let nrule = s:normalize_rule(a:rule)
-  if empty(l:nrule)
+  if empty(nrule)
     echom 'ERROR: In acf#add_rule(), input rule is invalid:' . string(a:rule)
     retu
   en
-
-  for l:ft in l:nrule.filetype
-    if !has_key(s:rule_list, l:ft)
-      let s:rule_list[l:ft] = [l:nrule]
+  for ft in nrule.filetype
+    if !has_key(s:rule_list, ft)
+      let s:rule_list[ft] = [nrule]
     el
-      if index(s:rule_list[l:ft], l:nrule) < 0
-        cal add(s:rule_list[l:ft], l:nrule)
+      if index(s:rule_list[ft], nrule) < 0
+        cal add(s:rule_list[ft], nrule)
       el
         cal s:DbgMsg('### already exists a rule', a:rule)
         retu
       en
-      cal sort(s:rule_list[l:ft], {a, b -> s:compare(a, b)})
+      cal sort(s:rule_list[ft], {a, b -> s:compare(a, b)})
     en
   endfo
 endf
@@ -234,32 +232,32 @@ endf
 fu! s:get_completion(ft) abort
   let syntax_chain = s:get_syntax_link_chain()
   let [cl, cc] = s:get_saved_cursor_pos()
-  let searchlimit = l:cl
+  let searchlimit = cl
   let ft = (a:ft ==# '') ? '_' : a:ft
   let result = 0
 
   cal s:DbgMsg('## s:get_completion::ft', a:ft)
-  let l:rules = has_key(s:rule_list, l:ft) ? s:rule_list[l:ft] : []
-  cal s:DbgMsg("#### s:get_completion::rules", l:rules)
+  let rules = has_key(s:rule_list, ft) ? s:rule_list[ft] : []
+  cal s:DbgMsg("#### s:get_completion::rules", rules)
 
-  for l:rule in l:rules
-    cal s:DbgMsg("### s:get_completion::rule", l:rule)
+  for rule in rules
+    cal s:DbgMsg("### s:get_completion::rule", rule)
     cal s:DbgMsg("### s:get_completion::do_feedkeys", s:ctx.do_feedkeys)
     if !empty(s:ctx.do_feedkeys)
-      if l:rule != s:ctx.do_feedkeys
+      if rule != s:ctx.do_feedkeys
         con
       el
         let s:ctx.do_feedkeys = {}
         con
       en
     en
-    let [sl, sc] = searchpos(l:rule.at, 'bcWn', searchlimit)
+    let [sl, sc] = searchpos(rule.at, 'bcWn', searchlimit)
     let search_reduce = ((s:ctx.startline ==# sl && s:ctx.startcol <= sc) ?
-          \ l:rule.not_found : 0)
+          \ rule.not_found : 0)
     cal s:DbgMsg("### s:get_completion::search_reduce", search_reduce)
-    let l:rule.not_found = search_reduce
-    let excepted = has_key(l:rule, 'except') && !empty(l:rule.except) ?
-          \ searchpos(l:rule.except, 'bcWn', searchlimit) !=# [0, 0] : 0
+    let rule.not_found = search_reduce
+    let excepted = has_key(rule, 'except') && !empty(rule.except) ?
+          \ searchpos(rule.except, 'bcWn', searchlimit) !=# [0, 0] : 0
     if [sl, sc] ==# [0, 0] || excepted || search_reduce
       con
     en
@@ -271,16 +269,16 @@ fu! s:get_completion(ft) abort
           \ || base[-strlen(s:ctx.ciword):] ==# s:ctx.ciword
       retu 0
     en
-    if !has_key(l:rule, 'syntax') || empty(l:rule.syntax)
-      let result = s:execute_func(l:rule, l:sl, l:sc, l:base)
-      if l:result | retu l:result | en
+    if !has_key(rule, 'syntax') || empty(rule.syntax)
+      let result = s:execute_func(rule, sl, sc, base)
+      if result | retu result | en
     el
-      for l:syn in syntax_chain
-        if index(l:rule.syntax, syn) == -1 | con | en
-        cal s:DbgMsg("### s:get_completion::syn", l:syn)
-        let result = s:execute_func(l:rule, l:sl, l:sc, l:base)
-        if l:result
-          retu l:result
+      for syn in syntax_chain
+        if index(rule.syntax, syn) == -1 | con | en
+        cal s:DbgMsg("### s:get_completion::syn", syn)
+        let result = s:execute_func(rule, sl, sc, base)
+        if result
+          retu result
         el
           brea
         en
@@ -288,7 +286,7 @@ fu! s:get_completion(ft) abort
     en
   endfo
 
-  retu l:result
+  retu result
 endf
 
 fu! s:save_cursor_pos() abort
@@ -319,8 +317,8 @@ endf
 fu! s:cb_get_completion(timer_id) abort
   let ok_mode = ['i', 'R']
   let s:ctx.mode = mode(1)
-  let l:saved_pos = s:get_saved_cursor_pos()
-  let l:current_pos = s:save_cursor_pos()
+  let saved_pos = s:get_saved_cursor_pos()
+  let current_pos = s:save_cursor_pos()
 
   " mode check
   if index(ok_mode, s:ctx.mode[0]) < 0
@@ -369,7 +367,7 @@ fu! s:cb_get_completion(timer_id) abort
     retu
   en
 
-  if l:saved_pos != l:current_pos
+  if saved_pos != current_pos
     cal s:DbgMsg("# s:cb_get_completion::cursor moved i")
     let s:ctx.has_item = -1
     let s:ctx.do_feedkeys = {}
@@ -403,15 +401,15 @@ fu! s:cb_get_completion(timer_id) abort
     en
   en
 
-  let l:result = -1
+  let result = -1
   cal s:DbgMsg("# s:cb_get_completion::cursor hold i")
   try
-    let l:result = s:get_completion(&ft)
-    if (l:result == 0) && (&ft != '')
+    let result = s:get_completion(&ft)
+    if (result == 0) && (&ft != '')
       cal s:DbgMsg("# s:cb_get_completion::fallback any filetype")
-      let l:result = s:get_completion('')
+      let result = s:get_completion('')
     en
-    if l:result == 0
+    if result == 0
       cal s:DbgMsg("# s:cb_get_completion::empty result")
       retu
     els
@@ -419,8 +417,8 @@ fu! s:cb_get_completion(timer_id) abort
       retu
     en
   fina
-    let s:ctx.has_item = !empty(s:ctx.do_feedkeys) ? -1 : l:result
-    if l:result == 2
+    let s:ctx.has_item = !empty(s:ctx.do_feedkeys) ? -1 : result
+    if result == 2
       cal s:DbgMsg("s:cb_get_completion::cal 2nd timer_start()")
       cal timer_start(g:acf_update_time/3, function('s:cb_get_completion'))
     endif
