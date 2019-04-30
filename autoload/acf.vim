@@ -252,7 +252,7 @@ fu! s:get_completion(ft) abort
       en
     en
     let [sl, sc] = searchpos(rule.at, 'bcWn', searchlimit)
-    let search_reduce = ((s:ctx.startline ==# sl && s:ctx.startcol <= sc) ?
+    let search_reduce = ((s:ctx.startline ==# sl && s:ctx.startcol < sc) ?
           \ rule.not_found : 0)
     cal s:DbgMsg("### s:get_completion::search_reduce", search_reduce)
     let rule.not_found = search_reduce
