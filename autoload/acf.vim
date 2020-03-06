@@ -463,6 +463,7 @@ fu! acf#complete_done() abort
     let s:ctx.ciword = v:completed_item['word']
   el
     let s:ctx.ciword = ""
+    let s:ctx.has_item = 0
   en
   cal s:DbgMsg("## acf#complete_done", v:completed_item)
 endf
